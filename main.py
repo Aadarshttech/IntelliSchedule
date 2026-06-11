@@ -5,6 +5,10 @@ from config import Config
 from models.database import engine, Base
 import os
 
+# Import all entity models so Base.metadata knows about them
+from models.entities import (Course, Instructor, Room, TimeSlot, StudentGroup,
+                              InstructorAvailability, Schedule, ScheduleEntry)
+
 # Create DB tables
 Base.metadata.create_all(bind=engine)
 
