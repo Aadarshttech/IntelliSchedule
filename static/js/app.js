@@ -6,6 +6,19 @@ const routes = {
     '/conflicts': ConflictsView
 };
 
+window.showToast = function(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerText = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+};
+
 function router() {
     let hash = window.location.hash.slice(1) || '/dashboard';
     if (!routes[hash]) hash = '/dashboard';
@@ -16,13 +29,28 @@ function router() {
     
     // Render view
     const viewContainer = document.getElementById('view-container');
-    const title = document.querySelector(`.nav-item[data-route="${hash}"]`)?.innerText || 'Dashboard';
+    const titleObj = document.querySelector(`.nav-item[data-route="${hash}"] span`);
+    const title = titleObj ? titleObj.innerText : 'Dashboard';
+    
     document.getElementById('page-title').innerText = title;
+    
+    // Subtitle mapping
+    const subtitles = {
+        '/dashboard': 'Overview of your timetable operations',
+        '/data': 'Manage courses, rooms, and constraints data',
+        '/dsl': 'Write and validate your timetable rules',
+        '/schedule': 'Generate and view the final timetable',
+        '/conflicts': 'Review solver infeasibilities and warnings'
+    };
+    document.getElementById('page-subtitle').innerText = subtitles[hash] || '';
     
     const view = routes[hash];
     if (view && typeof view.render === 'function') {
         viewContainer.innerHTML = view.render();
-        if (typeof view.init === 'function') view.init();
+        if (typeof view.init === 'function') {
+            // small timeout to ensure DOM is ready
+            setTimeout(() => view.init(), 0);
+        }
     }
 }
 
