@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable System</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CodeMirror for DSL Editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-ocean.min.css">
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Timetable AI</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#/dashboard" class="nav-item active" data-route="/dashboard">Dashboard</a>
+                <a href="#/data" class="nav-item" data-route="/data">Data Input</a>
+                <a href="#/dsl" class="nav-item" data-route="/dsl">Constraints DSL</a>
+                <a href="#/schedule" class="nav-item" data-route="/schedule">Schedule</a>
+                <a href="#/conflicts" class="nav-item" data-route="/conflicts">Conflicts</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1 id="page-title">Dashboard</h1>
+            </header>
+            <div id="view-container" class="view-container">
+                <!-- Views will be injected here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="/js/api.js"></script>
+    <script src="/js/views/dashboard.js"></script>
+    <script src="/js/views/data-input.js"></script>
+    <script src="/js/views/dsl-editor.js"></script>
+    <script src="/js/views/schedule.js"></script>
+    <script src="/js/views/conflicts.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

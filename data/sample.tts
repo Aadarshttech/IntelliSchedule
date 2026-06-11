@@ -1,0 +1,36 @@
+course CS101 {
+    name: "Intro to Computer Science"
+    credits: 3
+    students: 120
+    sessions_per_week: 3
+    type: lecture
+}
+
+course MATH201 {
+    name: "Linear Algebra"
+    credits: 3
+    students: 80
+    sessions_per_week: 2
+    type: lecture
+}
+
+room MainHall capacity 200 type lecture
+room Lab_A capacity 40 type lab
+
+instructor DrSmith teaches CS101, MATH201 {
+    max_hours: 12
+    available: Monday 08:00-17:00, Wednesday 08:00-17:00
+}
+
+group CS_Year1_A size 45 takes CS101, MATH201
+
+timeslot Monday 09:00-10:00
+timeslot Monday 10:00-11:00
+timeslot Tuesday 09:00-10:00
+timeslot Wednesday 09:00-10:00
+
+constraint no_overlap CS101 MATH201
+constraint require_room CS101 MainHall
+constraint max_daily DrSmith 3
+
+prefer morning CS101 weight 5

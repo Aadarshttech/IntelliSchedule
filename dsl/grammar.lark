@@ -1,0 +1,50 @@
+start: statement*
+
+statement: definition | constraint | preference
+
+definition: course_def | room_def | instructor_def | timeslot_def | group_def
+
+course_def: "course" CNAME "{" course_attr* "}" -> course
+course_attr: "name:" ESCAPED_STRING             -> c_name
+           | "credits:" NUMBER                   -> c_credits
+           | "students:" NUMBER                  -> c_students
+           | "sessions_per_week:" NUMBER         -> c_sessions
+           | "type:" CNAME                       -> c_type
+
+room_def: "room" CNAME "capacity" NUMBER "type" CNAME -> room
+
+instructor_def: "instructor" CNAME ("teaches" CNAME ("," CNAME)*)? ("{" instructor_attr* "}")? -> instructor
+instructor_attr: "max_hours:" NUMBER             -> i_max_hours
+               | "available:" available_list     -> i_available
+
+available_list: available_item ("," available_item)* -> avail_list
+available_item: DAY TIME "-" TIME -> avail_item
+
+group_def: "group" CNAME "size" NUMBER "takes" CNAME ("," CNAME)* -> group
+
+timeslot_def: "timeslot" DAY TIME "-" TIME -> timeslot
+
+// Hard Constraints
+constraint: "constraint" constraint_type -> constraint
+
+constraint_type: "no_overlap" CNAME CNAME                         -> c_no_overlap
+               | "require_room" CNAME CNAME                       -> c_require_room
+               | "same_day" CNAME CNAME                           -> c_same_day
+               | "max_daily" CNAME NUMBER                         -> c_max_daily
+
+// Soft Preferences
+preference: "prefer" preference_type -> preference
+
+preference_type: "morning" CNAME "weight" NUMBER                  -> p_morning
+               | "avoid_day" CNAME DAY "weight" NUMBER            -> p_avoid_day
+               | "consecutive" CNAME "weight" NUMBER              -> p_consecutive
+               | "compact" CNAME "weight" NUMBER                  -> p_compact
+
+DAY: "Monday"i | "Tuesday"i | "Wednesday"i | "Thursday"i | "Friday"i | "Saturday"i | "Sunday"i
+TIME: /\d{1,2}:\d{2}/
+
+%import common.CNAME
+%import common.NUMBER
+%import common.ESCAPED_STRING
+%import common.WS
+%ignore WS
