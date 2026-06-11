@@ -39,6 +39,7 @@ body {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     z-index: -1;
+    pointer-events: none;
     background: radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.15), transparent 40%),
                 radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.15), transparent 40%);
     filter: blur(60px);
@@ -428,6 +429,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    pointer-events: none;
 }
 .toast {
     background: var(--bg-panel);
@@ -438,6 +440,7 @@ body {
     backdrop-filter: blur(10px);
     animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     color: white;
+    pointer-events: auto;
 }
 .toast.error { border-left-color: var(--accent-danger); }
 .toast.success { border-left-color: var(--accent-success); }
@@ -445,3 +448,58 @@ body {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
+
+/* CRUD Forms */
+.crud-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.crud-form input,
+.crud-form select {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.crud-form input:focus,
+.crud-form select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.15);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.crud-form input::placeholder {
+    color: var(--text-muted);
+}
+
+.crud-form select option {
+    background: #1a1f2e;
+    color: var(--text-primary);
+}
+
+/* Entity Lists */
+.entity-list {
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.empty-msg {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 12px 0;
+    text-align: center;
+    font-style: italic;
+}
+

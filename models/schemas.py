@@ -2,9 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class CourseBase(BaseModel):
-    code: str
     name: str
-    credits: int
     sessions_per_week: int
     room_type: str
     enrollment_count: int
@@ -35,7 +33,6 @@ class InstructorResponse(InstructorBase):
 
 class RoomBase(BaseModel):
     name: str
-    building: str
     capacity: int
     room_type: str
 
@@ -87,7 +84,7 @@ class ScheduleEntryResponse(BaseModel):
     instructor: InstructorResponse
     room: RoomResponse
     timeslot: TimeSlotResponse
-    group: Optional[StudentGroupResponse]
+    group: Optional[StudentGroupResponse] = None
     class Config:
         orm_mode = True
         from_attributes = True

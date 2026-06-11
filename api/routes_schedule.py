@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import Optional
 from models.database import get_db
 from models.schemas import ScheduleGenerateRequest, ScheduleResponse
 from models.entities import Schedule, ScheduleEntry, Course, Room, Instructor, TimeSlot, StudentGroup
@@ -29,6 +30,7 @@ def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db
             
             course_map = {c.name: c.id for c in db.query(Course).all()}
             room_map = {r.name: r.id for r in db.query(Room).all()}
+            instructor_map = {i.name: i.id for i in db.query(Instructor).all()}
             
             for c in ast.get("constraints", []):
                 mapped_c = c.copy()
@@ -38,6 +40,8 @@ def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db
                     mapped_c["courses"] = [course_map.get(x, x) for x in mapped_c["courses"]]
                 if "room" in mapped_c and mapped_c["room"] in room_map:
                     mapped_c["room"] = room_map[mapped_c["room"]]
+                if "instructor" in mapped_c and mapped_c["instructor"] in instructor_map:
+                    mapped_c["instructor"] = instructor_map[mapped_c["instructor"]]
                 constraints.append(mapped_c)
                 
             for p in ast.get("preferences", []):
@@ -91,6 +95,11 @@ def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db
     db.commit()
     db.refresh(new_sched)
     return new_sched
+
+@router.get("/latest", response_model=Optional[ScheduleResponse])
+def get_latest_schedule(db: Session = Depends(get_db)):
+    sched = db.query(Schedule).order_by(Schedule.id.desc()).first()
+    return sched
 
 @router.get("/{id}", response_model=ScheduleResponse)
 def get_schedule(id: int, db: Session = Depends(get_db)):
