@@ -11,7 +11,7 @@ const ScheduleView = {
 
     render() {
         return `
-            <div class="card schedule-builder">
+            <div class="schedule-builder">
                 <div class="schedule-builder__header">
                     <div>
                         <h3 style="margin-bottom:6px;">Schedule Output</h3>
@@ -67,9 +67,11 @@ const ScheduleView = {
         };
 
         const timeFromMinutes = (totalMinutes) => {
-            const hours = Math.floor(totalMinutes / 60);
+            const hours24 = Math.floor(totalMinutes / 60);
             const minutes = totalMinutes % 60;
-            return `${String(hours).padStart(2, '0')}.${String(minutes).padStart(2, '0')}`;
+            const period = hours24 >= 12 ? 'PM' : 'AM';
+            const hours12 = hours24 % 12 || 12;
+            return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
         };
 
         const hashText = (text) => {
