@@ -7,7 +7,7 @@ const DataInputView = {
                     <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Courses</h3>
                     <form id="form-course" class="crud-form">
                         <input type="text" id="course-name" placeholder="Course Name (e.g., CS101)" required>
-                        <input type="text" id="course-type" placeholder="Room Type Required (e.g., Lecture)" required>
+                        <!-- room_type removed for courses -->
                         <div style="display: flex; gap: 8px;">
                             <input type="number" id="course-sessions" placeholder="Sessions/Week" required min="1">
                         </div>
@@ -56,7 +56,7 @@ const DataInputView = {
                                 <h3>Courses</h3>
                                 <form id="form-course" class="crud-form">
                                     <input type="text" id="course-name" placeholder="Course Name (e.g., CS101)" required>
-                                    <input type="text" id="course-type" placeholder="Room Type Required (e.g., Lecture)" required>
+                                    <!-- room_type removed for courses -->
                                     <div style="display: flex; gap: 8px;">
                                         <input type="number" id="course-sessions" placeholder="Sessions/Week" required min="1">
                                     </div>
@@ -208,7 +208,6 @@ const DataInputView = {
             const payload = {
                 name: document.getElementById('course-name').value,
                 sessions_per_week: parseInt(document.getElementById('course-sessions').value),
-                room_type: document.getElementById('course-type').value,
             };
             try {
                 await api.post('/data/courses', payload);

@@ -4,7 +4,7 @@ from typing import List, Optional
 class CourseBase(BaseModel):
     name: str
     sessions_per_week: int
-    room_type: str
+    # room_type removed — courses no longer require room type
     # enrollment removed from public API
 
 class CourseCreate(CourseBase):

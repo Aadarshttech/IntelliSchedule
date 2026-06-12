@@ -28,8 +28,7 @@ class Course(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     sessions_per_week = Column(Integer)
-    room_type = Column(String)
-    enrollment_count = Column(Integer)
+    # room_type and enrollment_count removed — courses are simple entities now
 
 class Instructor(Base):
     __tablename__ = "instructors"
