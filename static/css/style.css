@@ -1,41 +1,41 @@
 :root {
-    --bg-base: #060913;
-    --bg-panel: rgba(17, 24, 39, 0.6);
-    --bg-panel-hover: rgba(31, 41, 55, 0.8);
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-highlight: rgba(0, 240, 255, 0.3);
-    
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    
-    --accent-primary: #00f0ff;
-    --accent-secondary: #7000ff;
-    --accent-danger: #ff0055;
-    --accent-success: #00ffaa;
-    
-    --font-main: 'Outfit', sans-serif;
-    
-    --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.2);
-    --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --bg-base: #0f1724;
+    --bg-panel: rgba(255,255,255,0.02);
+    --bg-panel-hover: rgba(255,255,255,0.03);
+    --border-color: rgba(255,255,255,0.06);
+    --border-highlight: rgba(99,102,241,0.12);
+
+    --text-primary: #e6eef8;
+    --text-secondary: #9aa6bd;
+    --text-muted: #7b8796;
+
+    --accent-primary: #2563eb;
+    --accent-secondary: #6366f1;
+    --accent-danger: #ef4444;
+    --accent-success: #10b981;
+
+    --font-main: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+
+    --shadow-glow: 0 6px 24px rgba(16,24,40,0.08);
+    --shadow-panel: 0 6px 18px rgba(2,6,23,0.5);
 }
 
 /* Light / White theme overrides */
 body.light-theme {
     --bg-base: #ffffff;
     --bg-panel: #ffffff;
-    --bg-panel-hover: #f7f7f9;
+    --bg-panel-hover: #fbfbfd;
     --border-color: rgba(15, 23, 42, 0.06);
-    --border-highlight: rgba(0, 120, 255, 0.12);
+    --border-highlight: rgba(99,102,241,0.08);
     --text-primary: #0b1220;
     --text-secondary: #475569;
     --text-muted: #6b7280;
-    --accent-primary: #0ea5e9;
-    --accent-secondary: #7c3aed;
+    --accent-primary: #2563eb;
+    --accent-secondary: #6366f1;
     --accent-danger: #ef4444;
     --accent-success: #10b981;
-    --shadow-glow: 0 0 8px rgba(14,165,233,0.08);
-    --shadow-panel: 0 6px 18px rgba(16,24,40,0.06);
+    --shadow-glow: 0 4px 12px rgba(16,24,40,0.06);
+    --shadow-panel: 0 4px 12px rgba(2,6,23,0.06);
 }
 
 /* Fix top header tint in light theme */
@@ -66,10 +66,10 @@ body {
     top: 0; left: 0; right: 0; bottom: 0;
     z-index: -1;
     pointer-events: none;
-    background: radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.15), transparent 40%),
-                radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.15), transparent 40%);
-    filter: blur(60px);
-    animation: ambientShift 15s ease-in-out infinite alternate;
+    background: radial-gradient(circle at 15% 50%, rgba(99,102,241,0.06), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(37,99,235,0.04), transparent 40%);
+    filter: blur(30px);
+    animation: ambientShift 30s ease-in-out infinite alternate;
 }
 
 @keyframes ambientShift {
@@ -112,7 +112,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    filter: drop-shadow(0 0 8px var(--accent-primary));
 }
 
 .sidebar-header h2 {
@@ -184,10 +183,9 @@ body {
 }
 
 .main-header {
-    padding: 24px 40px;
-    border-bottom: 1px solid var(--border-color);
-    background: linear-gradient(180deg, rgba(6, 9, 19, 0.8), transparent);
-    backdrop-filter: blur(10px);
+    padding: 20px 36px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    background: rgba(6,9,19,0.35);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -250,22 +248,16 @@ body {
 
 /* Component: Cards */
 .card {
-    background: var(--bg-panel);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 24px;
+    padding: 20px;
     box-shadow: var(--shadow-panel);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    margin-bottom: 24px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-    animation: fadeInUp 0.4s ease-out forwards;
+    margin-bottom: 20px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-.card:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-}
+.card:hover { box-shadow: 0 8px 24px rgba(2,6,23,0.45); }
 
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(10px); }
@@ -282,51 +274,33 @@ body {
     gap: 8px;
 }
 
-/* Component: Buttons */
 .btn {
-    background: linear-gradient(135deg, var(--accent-secondary), #3b00ff);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 10px 20px;
-    border-radius: 8px;
+    background: var(--bg-panel-hover);
+    color: var(--text-primary);
+    border: 1px solid rgba(255,255,255,0.03);
+    padding: 10px 16px;
+    border-radius: 10px;
     cursor: pointer;
     font-family: var(--font-main);
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.95rem;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(112, 0, 255, 0.4);
-    background: linear-gradient(135deg, #8a2be2, #4100b3);
-}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(2,6,23,0.35); }
 
-.btn:active {
-    transform: translateY(0);
-}
-
+.btn:active { transform: translateY(0); }
 .btn.primary {
-    background: linear-gradient(135deg, var(--accent-primary), #00aaff);
-    color: #000;
-    text-shadow: none;
-    font-weight: 600;
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
 }
-.btn.primary:hover {
-    box-shadow: var(--shadow-glow);
-    background: linear-gradient(135deg, #33f3ff, #0088cc);
-}
+.btn.primary:hover { filter:brightness(0.98); }
 
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .btn.small {
     padding: 6px 10px;
@@ -527,8 +501,8 @@ select option { padding: 6px 8px; }
 .crud-form select:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.15);
-    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 18px rgba(37,99,235,0.06);
+    background: rgba(255,255,255,0.02);
 }
 
 .crud-form input::placeholder {
