@@ -5,7 +5,7 @@ class CourseBase(BaseModel):
     name: str
     sessions_per_week: int
     room_type: str
-    enrollment_count: int = 0
+    # enrollment removed from public API
 
 class CourseCreate(CourseBase):
     pass

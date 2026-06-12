@@ -80,23 +80,7 @@ const DataInputView = {
                             </div>
                         </div>
 
-                <!-- Assignments: which teacher teaches which course for a batch -->
-                <div class="card">
-                    <h3>Assignments</h3>
-                    <form id="form-assign" class="crud-form">
-                        <select id="assign-group" required>
-                            <option value="" disabled selected>Select Batch</option>
-                        </select>
-                        <select id="assign-instructor" required style="margin-top:8px;">
-                            <option value="" disabled selected>Select Teacher</option>
-                        </select>
-                        <select id="assign-course" required style="margin-top:8px;">
-                            <option value="" disabled selected>Select Course</option>
-                        </select>
-                        <button type="submit" class="btn primary" style="width: 100%;">Assign</button>
-                    </form>
-                    <div id="assign-result" style="color:var(--text-secondary)">No assignments yet.</div>
-                </div>
+                <!-- Assignments removed per user request -->
             </div>
         `;
     },
@@ -208,13 +192,7 @@ const DataInputView = {
                 document.getElementById('groups-list').innerHTML = '<p class="empty-msg">No batches yet. Add one above.</p>';
             }
 
-            // Populate assign selects
-            const assignGroup = document.getElementById('assign-group');
-            const assignInstructor = document.getElementById('assign-instructor');
-            const assignCourse = document.getElementById('assign-course');
-            assignGroup.innerHTML = '<option value="" disabled selected>Select Batch</option>' + (groups.map(g=>'<option value="'+g.id+'">'+g.name+'</option>').join(''));
-            assignInstructor.innerHTML = '<option value="" disabled selected>Select Teacher</option>' + (instructors.map(i=>'<option value="'+i.id+'">'+i.name+'</option>').join(''));
-            assignCourse.innerHTML = '<option value="" disabled selected>Select Course</option>' + (courses.map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join(''));
+            // Assignments feature removed.
             
         } catch (e) {
             window.showToast("Failed to load data: " + e.message, "error");
@@ -297,19 +275,7 @@ const DataInputView = {
             } catch (err) { window.showToast('Error: '+err.message, 'error'); }
         });
 
-        document.getElementById('form-assign').addEventListener('submit', async (e)=>{
-            e.preventDefault();
-            const payload = {
-                group_id: parseInt(document.getElementById('assign-group').value),
-                instructor_id: parseInt(document.getElementById('assign-instructor').value),
-                course_id: parseInt(document.getElementById('assign-course').value)
-            };
-            try {
-                await api.post('/data/assign', payload);
-                document.getElementById('assign-result').innerText = 'Assigned successfully';
-                await self.loadAllData();
-            } catch (err) { window.showToast('Assignment failed: '+err.message,'error'); }
-        });
+        // Assignments feature removed per request.
         // Wire delete buttons (delegated)
         document.getElementById('courses-list').addEventListener('click', async (e)=>{
             if(e.target.classList.contains('delete-btn')){

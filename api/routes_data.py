@@ -10,38 +10,7 @@ from typing import List
 router = APIRouter()
 
 
-# Assign instructor/course to a group (batch)
-@router.post("/assign")
-def assign_instructor_course(payload: dict, db: Session = Depends(get_db)):
-    # Expected payload: {"group_id": int, "instructor_id": int, "course_id": int}
-    g_id = payload.get('group_id')
-    i_id = payload.get('instructor_id')
-    c_id = payload.get('course_id')
-    if not (g_id and i_id and c_id):
-        raise HTTPException(status_code=400, detail="group_id, instructor_id and course_id are required")
-
-    group = db.query(StudentGroup).filter(StudentGroup.id == g_id).first()
-    instructor = db.query(Instructor).filter(Instructor.id == i_id).first()
-    course = db.query(Course).filter(Course.id == c_id).first()
-    if not group or not instructor or not course:
-        raise HTTPException(status_code=404, detail="group, instructor or course not found")
-
-    # Ensure group has the course
-    if course not in group.courses:
-        group.courses.append(course)
-
-    # Ensure instructor teaches the course
-    if course not in instructor.courses:
-        instructor.courses.append(course)
-
-    # Ensure instructor is associated with the group
-    if group not in instructor.groups:
-        instructor.groups.append(group)
-
-    db.add(group)
-    db.add(instructor)
-    db.commit()
-    return {"status": "ok"}
+# Note: assignment endpoint removed per UX decision (assignments managed implicitly via groups/instructors)
 
 # Courses
 @router.get("/courses", response_model=List[CourseResponse])
