@@ -117,9 +117,7 @@ body {
 .sidebar-header h2 {
     font-size: 1.25rem;
     font-weight: 700;
-    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--accent-secondary);
     letter-spacing: 0.5px;
 }
 
