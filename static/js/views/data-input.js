@@ -2,85 +2,66 @@ const DataInputView = {
     render() {
         return `
             <div class="grid-2" style="margin-bottom: 24px;">
-                <!-- Courses Form & List -->
+                <!-- Batches Form & List (first step) -->
                 <div class="card">
-                    <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Courses</h3>
+                    <h3>Student Batches</h3>
+                    <form id="form-group" class="crud-form">
+                        <input type="text" id="group-name" placeholder="Batch Name (e.g., 2024-A)" required>
+                        <input type="number" id="group-size" placeholder="Batch Size" required min="1">
+                        <div id="group-courses-container" style="margin-top:8px; display:flex; flex-direction:column; gap:6px; max-height:120px; overflow:auto; padding:6px; border:1px solid var(--border-color); border-radius:8px; background: rgba(0,0,0,0.04);">
+                            <small style="color:var(--text-secondary);">Select courses for this batch</small>
+                            <div id="group-courses" class="checkbox-list">Loading courses...</div>
+                        </div>
+                        <button type="submit" class="btn primary" style="width: 100%">+ Add Batch</button>
+                    </form>
+                    <div id="groups-list" class="entity-list">Loading batches...</div>
+                </div>
+
+                <!-- Instructors Form & List (enabled after at least one batch exists) -->
+                <div class="card" id="instructor-card">
+                    <h3>Teachers</h3>
+                    <form id="form-instructor" class="crud-form">
+                        <input type="text" id="inst-name" placeholder="Teacher Name" required>
+                        <select id="inst-groups" multiple style="height: 60px; margin-top:8px;">
+                            <option value="" disabled>Loading batches...</option>
+                        </select>
+                        <select id="inst-courses" multiple style="height: 60px; margin-top:8px;">
+                            <option value="" disabled>Loading courses...</option>
+                        </select>
+                        <small style="color: var(--text-secondary); display: block;">Hold Ctrl to select multiple batches/courses.</small>
+                        <button type="submit" class="btn primary" style="width: 100%">+ Add Teacher</button>
+                    </form>
+                    <div id="instructors-list" class="entity-list">Loading instructors...</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Courses Form & List (enabled after at least one instructor exists) -->
+                <div class="card" id="course-card">
+                    <h3>Courses</h3>
                     <form id="form-course" class="crud-form">
                         <input type="text" id="course-name" placeholder="Course Name (e.g., CS101)" required>
-                        <!-- room_type removed for courses -->
                         <div style="display: flex; gap: 8px;">
                             <input type="number" id="course-sessions" placeholder="Sessions/Week" required min="1">
                         </div>
-                        <button type="submit" class="btn primary" style="width: 100%;">+ Add Course</button>
+                        <button type="submit" class="btn primary" style="width: 100%">+ Add Course</button>
                     </form>
                     <div id="courses-list" class="entity-list">Loading courses...</div>
                 </div>
 
-                        <!-- Reordered flow: Batch first, then Instructor, then Course/Room -->
-                        <div class="grid-2" style="margin-bottom: 24px;">
-                            <!-- Batches Form & List (first step) -->
-                            <div class="card">
-                                <h3>Student Batches</h3>
-                                <form id="form-group" class="crud-form">
-                                    <input type="text" id="group-name" placeholder="Batch Name (e.g., 2024-A)" required>
-                                    <input type="number" id="group-size" placeholder="Batch Size" required min="1">
-                                    <select id="group-courses" multiple style="height: 80px; margin-top:8px;">
-                                        <option value="" disabled>Loading courses...</option>
-                                    </select>
-                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Batch</button>
-                                </form>
-                                <div id="groups-list" class="entity-list">Loading batches...</div>
-                            </div>
-
-                            <!-- Instructors Form & List (enabled after at least one batch exists) -->
-                            <div class="card" id="instructor-card">
-                                <h3>Teachers</h3>
-                                <form id="form-instructor" class="crud-form">
-                                    <input type="text" id="inst-name" placeholder="Teacher Name" required>
-                                    <select id="inst-groups" multiple style="height: 60px; margin-top:8px;">
-                                        <option value="" disabled>Loading batches...</option>
-                                    </select>
-                                    <select id="inst-courses" multiple style="height: 60px; margin-top:8px;">
-                                        <option value="" disabled>Loading courses...</option>
-                                    </select>
-                                    <small style="color: var(--text-secondary); display: block;">Hold Ctrl to select multiple batches/courses.</small>
-                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Teacher</button>
-                                </form>
-                                <div id="instructors-list" class="entity-list">Loading instructors...</div>
-                            </div>
+                <!-- Rooms Form & List -->
+                <div class="card">
+                    <h3>Classrooms</h3>
+                    <form id="form-room" class="crud-form">
+                        <input type="text" id="room-name" placeholder="Room Name (e.g., Lab 1)" required>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" id="room-capacity" placeholder="Capacity" required min="1">
+                            <input type="text" id="room-type" placeholder="Type (e.g., Lab)" required>
                         </div>
-
-                        <div class="grid-2">
-                            <!-- Courses Form & List (enabled after at least one instructor exists) -->
-                            <div class="card" id="course-card">
-                                <h3>Courses</h3>
-                                <form id="form-course" class="crud-form">
-                                    <input type="text" id="course-name" placeholder="Course Name (e.g., CS101)" required>
-                                    <!-- room_type removed for courses -->
-                                    <div style="display: flex; gap: 8px;">
-                                        <input type="number" id="course-sessions" placeholder="Sessions/Week" required min="1">
-                                    </div>
-                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Course</button>
-                                </form>
-                                <div id="courses-list" class="entity-list">Loading courses...</div>
-                            </div>
-
-                            <!-- Rooms Form & List -->
-                            <div class="card">
-                                <h3>Classrooms</h3>
-                                <form id="form-room" class="crud-form">
-                                    <input type="text" id="room-name" placeholder="Room Name (e.g., Lab 1)" required>
-                                    <div style="display: flex; gap: 8px;">
-                                        <input type="number" id="room-capacity" placeholder="Capacity" required min="1">
-                                        <input type="text" id="room-type" placeholder="Type (e.g., Lab)" required>
-                                    </div>
-                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Room</button>
-                                </form>
-                                <div id="rooms-list" class="entity-list">Loading rooms...</div>
-                            </div>
-                        </div>
-
-                <!-- Assignments removed per user request -->
+                        <button type="submit" class="btn primary" style="width: 100%">+ Add Room</button>
+                    </form>
+                    <div id="rooms-list" class="entity-list">Loading rooms...</div>
+                </div>
             </div>
         `;
     },
@@ -102,8 +83,8 @@ const DataInputView = {
             
             // Render Courses
             if (courses.length) {
-                let h = '<table class="data-table"><tr><th>Name</th><th>Type</th><th>Sessions</th><th></th></tr>';
-                courses.forEach(c => { h += '<tr><td>' + c.name + '</td><td><span class="badge info">' + c.room_type + '</span></td><td>' + c.sessions_per_week + '</td><td><button data-id="'+c.id+'" data-type="course" class="btn small delete-btn">Delete</button></td></tr>'; });
+                let h = '<table class="data-table"><tr><th>Name</th><th>Sessions</th><th></th></tr>';
+                courses.forEach(c => { h += '<tr><td>' + c.name + '</td><td>' + c.sessions_per_week + '</td><td><button data-id="'+c.id+'" data-type="course" class="btn small delete-btn">Delete</button></td></tr>'; });
                 h += '</table>';
                 document.getElementById('courses-list').innerHTML = h;
             } else {
@@ -118,15 +99,18 @@ const DataInputView = {
                 courseSelect.innerHTML = '<option value="" disabled>Add courses first</option>';
             }
 
-            // Populate group-courses multi-select for batch creation
+            // Populate group-courses checkbox list for batch creation
             const groupCourses = document.getElementById('group-courses');
             if (groupCourses) {
-                if (courses.length) groupCourses.innerHTML = courses.map(c => '<option value="' + c.id + '">' + c.name + '</option>').join('');
-                else groupCourses.innerHTML = '<option value="" disabled>Add courses first</option>';
+                if (courses.length) {
+                    groupCourses.innerHTML = courses.map(c => '<label style="display:block; padding:6px 8px; border-radius:6px;"><input type="checkbox" name="group_course" value="' + c.id + '" style="margin-right:8px;">' + c.name + '</label>').join('');
+                } else {
+                    groupCourses.innerHTML = '<div class="empty-msg">Add courses first</div>';
+                }
             }
 
             // Style selects: add open class on focus for subtle animation
-            ['inst-courses','inst-groups','group-courses','assign-group','assign-instructor','assign-course'].forEach(id => {
+            ['inst-courses','inst-groups'].forEach(id => {
                 const el = document.getElementById(id);
                 if(!el) return;
                 el.addEventListener('focus', ()=> el.classList.add('select-open'));
@@ -260,7 +244,7 @@ const DataInputView = {
 
         document.getElementById('form-group').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const selectedCourseIds = Array.from(document.getElementById('group-courses').selectedOptions).map(o=>parseInt(o.value));
+            const selectedCourseIds = Array.from(document.querySelectorAll('#group-courses input[name="group_course"]:checked')).map(i=>parseInt(i.value));
             const payload = {
                 name: document.getElementById('group-name').value,
                 size: parseInt(document.getElementById('group-size').value),

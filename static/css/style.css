@@ -542,9 +542,22 @@ select option { padding: 6px 8px; }
 
 /* Entity Lists */
 .entity-list {
-    max-height: 220px;
+    max-height: 300px;
     overflow-y: auto;
+    padding-right: 6px;
 }
+
+/* Checkbox list used for batch course selection */
+.checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.checkbox-list label:hover { background: rgba(255,255,255,0.02); }
+.checkbox-list input[type="checkbox"] { width: 16px; height: 16px; }
 
 .empty-msg {
     color: var(--text-muted);
