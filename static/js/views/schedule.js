@@ -1,160 +1,293 @@
 const ScheduleView = {
+    state: {
+        groups: [],
+        courses: [],
+        instructors: [],
+        currentGrid: null,
+        currentTitle: ''
+    },
+
     render() {
         return `
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <h3>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        Generated Output
-                    </h3>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn primary" id="generate-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                        Generate Timetable
-                        </button>
-                        <button class="btn" id="print-white">Printable View</button>
+            <div class="card schedule-builder">
+                <div class="schedule-builder__header">
+                    <div>
+                        <h3 style="margin-bottom:6px;">Schedule Output</h3>
+                        <p class="schedule-builder__subtitle">Pick a batch, set the time range, choose class length, and generate a fixed weekly timetable.</p>
+                    </div>
+                    <div class="schedule-builder__actions">
+                        <button class="btn primary" id="build-schedule-btn">Build Timetable</button>
+                        <button class="btn" id="print-schedule-btn">Print View</button>
                     </div>
                 </div>
-                <div id="calendar-wrapper" style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div id="calendar"></div>
+
+                <div class="schedule-controls">
+                    <div class="schedule-control">
+                        <label for="schedule-group">Batch</label>
+                        <select id="schedule-group">
+                            <option value="">Loading batches...</option>
+                        </select>
+                    </div>
+                    <div class="schedule-control">
+                        <label for="schedule-start">Start Time</label>
+                        <input type="time" id="schedule-start" value="09:00">
+                    </div>
+                    <div class="schedule-control">
+                        <label for="schedule-end">End Time</label>
+                        <input type="time" id="schedule-end" value="15:30">
+                    </div>
+                    <div class="schedule-control">
+                        <label for="schedule-length">Class Length (min)</label>
+                        <input type="number" id="schedule-length" min="15" step="5" value="40">
+                    </div>
+                </div>
+
+                <div class="schedule-summary" id="schedule-summary">
+                    Select a batch to see its courses.
+                </div>
+
+                <div id="schedule-output" class="schedule-output">
+                    <div class="empty-msg" style="padding: 28px 0;">Build a timetable to preview the weekly grid.</div>
                 </div>
             </div>
         `;
     },
+
     async init() {
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'timeGridWeek',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'timeGridWeek,timeGridDay'
-            },
-            slotMinTime: '08:00:00',
-            slotMaxTime: '20:00:00',
-            allDaySlot: false,
-            height: 'auto',
-            themeSystem: 'standard',
-            events: []
-        });
-        calendar.render();
+        const scheduleGroup = document.getElementById('schedule-group');
+        const scheduleSummary = document.getElementById('schedule-summary');
+        const scheduleOutput = document.getElementById('schedule-output');
 
-        function getIsoDateTime(dayName, timeStr) {
-            const daysOfWeek = {
-                'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
-                'thursday': 4, 'friday': 5, 'saturday': 6
-            };
-            const targetDayNum = daysOfWeek[dayName.toLowerCase()];
-            if (targetDayNum === undefined) return null;
-            
-            const now = new Date();
-            const currentDayNum = now.getDay();
-            
-            const diff = targetDayNum - currentDayNum;
-            const targetDate = new Date(now);
-            targetDate.setDate(now.getDate() + diff);
-            
-            const yyyy = targetDate.getFullYear();
-            const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(targetDate.getDate()).padStart(2, '0');
-            
-            return `${yyyy}-${mm}-${dd}T${timeStr}`;
-        }
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-        function mapEntriesToEvents(entries) {
-            return entries.map(entry => {
-                const titleText = `${entry.course.name}\n${entry.room.name} | ${entry.instructor ? entry.instructor.name : 'TBA'}`;
-                return {
-                    title: titleText,
-                    start: getIsoDateTime(entry.timeslot.day, entry.timeslot.start_time),
-                    end: getIsoDateTime(entry.timeslot.day, entry.timeslot.end_time),
-                    backgroundColor: 'rgba(0, 255, 170, 0.15)',
-                    borderColor: 'var(--accent-primary)',
-                    textColor: '#ffffff'
-                };
-            }).filter(e => e.start && e.end);
-        }
-
-        const loadScheduleIntoCalendar = (scheduleData) => {
-            calendar.removeAllEvents();
-            if (scheduleData && scheduleData.entries) {
-                const events = mapEntriesToEvents(scheduleData.entries);
-                calendar.addEventSource(events);
-            }
+        const minutesFromTime = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return (hours * 60) + minutes;
         };
 
-        // Load latest schedule on startup
-        try {
-            const latest = await api.get('/schedule/latest');
-            if (latest) {
-                loadScheduleIntoCalendar(latest);
-            }
-        } catch (e) {
-            console.error("Failed to load latest schedule", e);
-        }
-        
-        document.getElementById('generate-btn').addEventListener('click', async (e) => {
-            const btn = e.currentTarget;
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> Solving...`;
-            btn.disabled = true;
-            
-            try {
-                // Read DSL constraints from localStorage
-                const dslText = localStorage.getItem('dsl_text') || "";
-                const reqData = { dsl_text: dslText, time_limit_seconds: 10 };
-                const sched = await api.post('/schedule/generate', reqData);
-                
-                window.showToast("Schedule Generated Successfully!", "success");
-                
-                // Fetch full schedule entries
-                const fullSched = await api.get(`/schedule/${sched.id}`);
-                loadScheduleIntoCalendar(fullSched);
-                
-            } catch(error) {
-                console.error(error);
-                window.showToast("Solver Failed or Infeasible: " + error.message, "error");
-            } finally {
-                btn.innerHTML = originalHtml;
-                btn.disabled = false;
-            }
-        });
+        const timeFromMinutes = (totalMinutes) => {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return `${String(hours).padStart(2, '0')}.${String(minutes).padStart(2, '0')}`;
+        };
 
-        document.getElementById('print-white').addEventListener('click', async ()=>{
-            try{
-                const latest = await api.get('/schedule/latest');
-                const entries = latest && latest.entries ? latest.entries : [];
-                // build simple printable white table grouped by day/time
-                const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-                const times = [...new Set(entries.map(en=>en.timeslot.start_time))].sort();
+        const instructorNameForCourse = (courseId) => {
+            const match = this.state.instructors.find((instructor) =>
+                (instructor.courses || []).some((course) => course.id === courseId)
+            );
+            return match ? match.name : '';
+        };
 
-                let html = `<!doctype html><html><head><meta charset="utf-8"><title>Printable Timetable</title><style>body{font-family:Arial,Helvetica,sans-serif;margin:20px;color:#0b1220}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f3f4f6}</style></head><body>`;
-                html += `<h2>Timetable</h2>`;
-                html += `<table><tr><th>Time</th>` + days.map(d=>`<th>${d}</th>`).join('') + `</tr>`;
-                const slots = Array.from(new Set(entries.map(e=>e.timeslot.start_time))).sort();
-                for(const t of slots){
-                    html += `<tr><td>${t}</td>`;
-                    for(const d of days){
-                        const match = entries.find(en => en.timeslot.start_time===t && en.timeslot.day.toLowerCase()===d.toLowerCase());
-                        if(match){
-                            html += `<td><strong>${match.course.name}</strong><br>${match.instructor?match.instructor.name:'TBA'}<br>${match.room?match.room.name:''}</td>`;
-                        } else html += `<td></td>`;
-                    }
-                    html += `</tr>`;
+        const buildSessionQueue = (group) => {
+            const queue = [];
+            (group.courses || []).forEach((course) => {
+                const sessions = Math.max(parseInt(course.sessions_per_week || 1, 10), 1);
+                for (let index = 0; index < sessions; index += 1) {
+                    queue.push({
+                        courseId: course.id,
+                        courseName: course.name,
+                        instructorName: instructorNameForCourse(course.id)
+                    });
                 }
-                html += `</table></body></html>`;
-                const w = window.open('', '_blank');
-                w.document.write(html);
-                w.document.close();
-            } catch(e){ window.showToast('Cannot create printable view: '+e.message,'error'); }
-        });
-        
-        // Add spinner CSS if not present
-        if (!document.getElementById('spinner-style')) {
-            const style = document.createElement('style');
-            style.id = 'spinner-style';
-            style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
-            document.head.appendChild(style);
+            });
+            return queue;
+        };
+
+        const renderGrid = (group, startTime, endTime, slotMinutes) => {
+            const startMinutes = minutesFromTime(startTime);
+            const endMinutes = minutesFromTime(endTime);
+
+            if (endMinutes <= startMinutes) {
+                throw new Error('End time must be after start time.');
+            }
+
+            if (slotMinutes < 15) {
+                throw new Error('Class length should be at least 15 minutes.');
+            }
+
+            const rows = [];
+            for (let cursor = startMinutes; cursor + slotMinutes <= endMinutes; cursor += slotMinutes) {
+                rows.push({
+                    startLabel: timeFromMinutes(cursor),
+                    endLabel: timeFromMinutes(cursor + slotMinutes)
+                });
+            }
+
+            const queue = buildSessionQueue(group);
+            const cells = rows.length * days.length;
+            const timetable = Array.from({ length: rows.length }, () => Array(days.length).fill(null));
+
+            for (let index = 0; index < Math.min(queue.length, cells); index += 1) {
+                const rowIndex = Math.floor(index / days.length);
+                const dayIndex = index % days.length;
+                timetable[rowIndex][dayIndex] = queue[index];
+            }
+
+            if (queue.length > cells) {
+                window.showToast('Not enough timetable slots for all sessions. Some classes were left out.', 'error');
+            }
+
+            const header = days.map((day) => `<th>${day}</th>`).join('');
+            let rowsHtml = '';
+
+            rows.forEach((row, rowIndex) => {
+                rowsHtml += `<tr><th class="timetable-time">${row.startLabel}<span>${row.endLabel}</span></th>`;
+                days.forEach((day, dayIndex) => {
+                    const cell = timetable[rowIndex][dayIndex];
+                    if (cell) {
+                        rowsHtml += `
+                            <td class="timetable-cell timetable-cell--filled">
+                                <div class="timetable-course">${cell.courseName}</div>
+                                <div class="timetable-meta">${cell.instructorName || 'TBA'}</div>
+                            </td>
+                        `;
+                    } else {
+                        rowsHtml += `<td class="timetable-cell timetable-cell--empty"></td>`;
+                    }
+                });
+                rowsHtml += '</tr>';
+            });
+
+            const groupName = group.name;
+            this.state.currentTitle = `${groupName} timetable`;
+            this.state.currentGrid = { group, startTime, endTime, slotMinutes, rows, timetable };
+
+            scheduleSummary.innerHTML = `
+                <strong>${groupName}</strong>
+                <span>${group.size} students</span>
+                <span>${group.courses.length} course(s)</span>
+                <span>${rows.length} time slot(s) across ${days.length} days</span>
+            `;
+
+            scheduleOutput.innerHTML = `
+                <div class="timetable-frame">
+                    <table class="timetable-grid">
+                        <thead>
+                            <tr>
+                                <th class="timetable-corner">Time</th>
+                                ${header}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        };
+
+        const renderEmptyState = (message) => {
+            scheduleOutput.innerHTML = `<div class="empty-msg" style="padding: 28px 0;">${message}</div>`;
+            scheduleSummary.textContent = message;
+            this.state.currentGrid = null;
+            this.state.currentTitle = '';
+        };
+
+        try {
+            const [groups, courses, instructors] = await Promise.all([
+                api.get('/data/groups'),
+                api.get('/data/courses'),
+                api.get('/data/instructors')
+            ]);
+
+            this.state.groups = groups || [];
+            this.state.courses = courses || [];
+            this.state.instructors = instructors || [];
+
+            if (this.state.groups.length) {
+                scheduleGroup.innerHTML = this.state.groups.map((group) => `<option value="${group.id}">${group.name}</option>`).join('');
+                const firstGroup = this.state.groups[0];
+                scheduleGroup.value = String(firstGroup.id);
+                scheduleSummary.innerHTML = `
+                    <strong>${firstGroup.name}</strong>
+                    <span>${firstGroup.size} students</span>
+                    <span>${(firstGroup.courses || []).length} course(s)</span>
+                `;
+            } else {
+                scheduleGroup.innerHTML = '<option value="">No batches available</option>';
+                renderEmptyState('Add a batch first, then build the timetable.');
+            }
+
+            const updateSummary = () => {
+                const group = this.state.groups.find((item) => String(item.id) === scheduleGroup.value);
+                if (!group) {
+                    renderEmptyState('Select a batch to build the timetable.');
+                    return;
+                }
+                scheduleSummary.innerHTML = `
+                    <strong>${group.name}</strong>
+                    <span>${group.size} students</span>
+                    <span>${(group.courses || []).length} course(s)</span>
+                `;
+            };
+
+            scheduleGroup.addEventListener('change', updateSummary);
+
+            document.getElementById('build-schedule-btn').addEventListener('click', () => {
+                const group = this.state.groups.find((item) => String(item.id) === scheduleGroup.value);
+                if (!group) {
+                    window.showToast('Please select a batch first.', 'error');
+                    return;
+                }
+
+                const startTime = document.getElementById('schedule-start').value || '09:00';
+                const endTime = document.getElementById('schedule-end').value || '15:30';
+                const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 40;
+
+                try {
+                    renderGrid(group, startTime, endTime, slotMinutes);
+                    window.showToast('Timetable built successfully.', 'success');
+                } catch (error) {
+                    window.showToast(error.message, 'error');
+                }
+            });
+
+            document.getElementById('print-schedule-btn').addEventListener('click', () => {
+                if (!this.state.currentGrid) {
+                    window.showToast('Build a timetable before printing.', 'error');
+                    return;
+                }
+
+                const { group, rows, timetable } = this.state.currentGrid;
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                let html = `<!doctype html><html><head><meta charset="utf-8"><title>${this.state.currentTitle}</title><style>
+                    body{font-family:Arial,Helvetica,sans-serif;margin:24px;color:#111827}
+                    h1{font-size:22px;margin:0 0 8px}
+                    p{margin:0 0 16px;color:#4b5563}
+                    table{width:100%;border-collapse:collapse}
+                    th,td{border:1px solid #d1d5db;padding:10px;vertical-align:top;text-align:center}
+                    thead th{background:#eef2ff}
+                    .time{font-weight:700;text-align:left;white-space:nowrap}
+                    .course{font-weight:700;margin-bottom:4px}
+                    .meta{font-size:12px;color:#6b7280}
+                </style></head><body>`;
+                html += `<h1>${group.name} timetable</h1><p>${group.size} students</p>`;
+                html += '<table><thead><tr><th>Time</th>' + days.map((day) => `<th>${day}</th>`).join('') + '</tr></thead><tbody>';
+                rows.forEach((row, rowIndex) => {
+                    html += `<tr><th class="time">${row.startLabel} - ${row.endLabel}</th>`;
+                    days.forEach((day, dayIndex) => {
+                        const cell = timetable[rowIndex][dayIndex];
+                        if (cell) {
+                            html += `<td><div class="course">${cell.courseName}</div><div class="meta">${cell.instructorName || 'TBA'}</div></td>`;
+                        } else {
+                            html += '<td></td>';
+                        }
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table></body></html>';
+
+                const win = window.open('', '_blank');
+                win.document.write(html);
+                win.document.close();
+            });
+
+            if (this.state.groups.length) {
+                document.getElementById('build-schedule-btn').click();
+            }
+        } catch (error) {
+            console.error(error);
+            renderEmptyState('Unable to load batches. Add your data and try again.');
         }
     }
 };

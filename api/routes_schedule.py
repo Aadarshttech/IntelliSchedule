@@ -15,7 +15,7 @@ transformer = DSLTransformer()
 
 @router.post("/generate", response_model=ScheduleResponse)
 def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db)):
-    courses = [{"id": c.id, "name": c.name, "sessions_per_week": c.sessions_per_week, "students": c.enrollment_count, "room_type": c.room_type} for c in db.query(Course).all()]
+    courses = [{"id": c.id, "name": c.name, "sessions_per_week": c.sessions_per_week} for c in db.query(Course).all()]
     rooms = [{"id": r.id, "name": r.name, "capacity": r.capacity, "room_type": r.room_type} for r in db.query(Room).all()]
     instructors = [{"id": i.id, "name": i.name, "courses": [c.id for c in i.courses], "groups": [g.id for g in i.groups]} for i in db.query(Instructor).all()]
     

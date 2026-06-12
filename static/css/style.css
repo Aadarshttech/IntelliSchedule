@@ -117,7 +117,9 @@ body {
 .sidebar-header h2 {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--accent-secondary);
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     letter-spacing: 0.5px;
 }
 
@@ -427,6 +429,158 @@ select option { padding: 6px 8px; }
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+}
+
+/* Schedule Builder */
+.schedule-builder {
+    padding: 24px;
+}
+
+.schedule-builder__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.schedule-builder__subtitle {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 720px;
+}
+
+.schedule-builder__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.schedule-controls {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.schedule-control label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.schedule-control input,
+.schedule-control select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-panel-hover);
+    color: var(--text-primary);
+}
+
+.schedule-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    color: var(--text-secondary);
+}
+
+.schedule-summary strong {
+    color: var(--text-primary);
+    font-size: 0.98rem;
+}
+
+.schedule-summary span {
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: rgba(255,255,255,0.02);
+}
+
+.schedule-output {
+    overflow-x: auto;
+}
+
+.timetable-frame {
+    min-width: 760px;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.02);
+}
+
+.timetable-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.timetable-grid th,
+.timetable-grid td {
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    padding: 12px;
+}
+
+.timetable-grid thead th {
+    background: rgba(255,255,255,0.04);
+    color: var(--text-primary);
+    font-weight: 700;
+    text-align: center;
+}
+
+.timetable-corner {
+    width: 110px;
+}
+
+.timetable-time {
+    width: 110px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-primary);
+    font-weight: 700;
+    text-align: left;
+    vertical-align: top;
+}
+
+.timetable-time span {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.timetable-cell {
+    height: 92px;
+    vertical-align: middle;
+}
+
+.timetable-cell--filled {
+    background: linear-gradient(180deg, rgba(37,99,235,0.10), rgba(37,99,235,0.04));
+}
+
+.timetable-cell--empty {
+    background: rgba(255,255,255,0.01);
+}
+
+.timetable-course {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.timetable-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
 }
 
 /* Badges */
