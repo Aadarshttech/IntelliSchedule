@@ -1,41 +1,41 @@
 :root {
-    --bg-base: #0f1724;
-    --bg-panel: rgba(255,255,255,0.02);
-    --bg-panel-hover: rgba(255,255,255,0.03);
-    --border-color: rgba(255,255,255,0.06);
-    --border-highlight: rgba(99,102,241,0.12);
+    --bg-base: #ffffff;
+    --bg-panel: #ffffff;
+    --bg-panel-hover: #f8fafc;
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-highlight: rgba(37, 99, 235, 0.12);
 
-    --text-primary: #e6eef8;
-    --text-secondary: #9aa6bd;
-    --text-muted: #7b8796;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
 
     --accent-primary: #2563eb;
-    --accent-secondary: #6366f1;
+    --accent-secondary: #1d4ed8;
     --accent-danger: #ef4444;
     --accent-success: #10b981;
 
     --font-main: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 
-    --shadow-glow: 0 6px 24px rgba(16,24,40,0.08);
-    --shadow-panel: 0 6px 18px rgba(2,6,23,0.5);
+    --shadow-glow: 0 6px 18px rgba(37, 99, 235, 0.08);
+    --shadow-panel: 0 10px 26px rgba(15, 23, 42, 0.06);
 }
 
 /* Light / White theme overrides */
 body.light-theme {
     --bg-base: #ffffff;
     --bg-panel: #ffffff;
-    --bg-panel-hover: #fbfbfd;
-    --border-color: rgba(15, 23, 42, 0.06);
-    --border-highlight: rgba(99,102,241,0.08);
-    --text-primary: #0b1220;
+    --bg-panel-hover: #f8fafc;
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-highlight: rgba(37, 99, 235, 0.12);
+    --text-primary: #0f172a;
     --text-secondary: #475569;
-    --text-muted: #6b7280;
+    --text-muted: #64748b;
     --accent-primary: #2563eb;
-    --accent-secondary: #6366f1;
+    --accent-secondary: #1d4ed8;
     --accent-danger: #ef4444;
     --accent-success: #10b981;
-    --shadow-glow: 0 4px 12px rgba(16,24,40,0.06);
-    --shadow-panel: 0 4px 12px rgba(2,6,23,0.06);
+    --shadow-glow: 0 6px 18px rgba(37, 99, 235, 0.08);
+    --shadow-panel: 0 10px 26px rgba(15, 23, 42, 0.06);
 }
 
 /* Fix top header tint in light theme */
@@ -66,10 +66,7 @@ body {
     top: 0; left: 0; right: 0; bottom: 0;
     z-index: -1;
     pointer-events: none;
-    background: radial-gradient(circle at 15% 50%, rgba(99,102,241,0.06), transparent 40%),
-                radial-gradient(circle at 85% 30%, rgba(37,99,235,0.04), transparent 40%);
-    filter: blur(30px);
-    animation: ambientShift 30s ease-in-out infinite alternate;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,1));
 }
 
 @keyframes ambientShift {
@@ -89,8 +86,6 @@ body {
 .sidebar {
     width: 280px;
     background: var(--bg-panel);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -151,9 +146,9 @@ body {
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: #f8fafc;
     color: var(--text-primary);
-    transform: translateX(4px);
+    transform: translateX(2px);
 }
 
 .nav-item:hover svg {
@@ -162,7 +157,7 @@ body {
 }
 
 .nav-item.active {
-    background: linear-gradient(90deg, rgba(0, 240, 255, 0.1), transparent);
+    background: rgba(37, 99, 235, 0.08);
     color: var(--accent-primary);
     border: 1px solid var(--border-highlight);
     box-shadow: inset 2px 0 0 var(--accent-primary);
@@ -184,8 +179,8 @@ body {
 
 .main-header {
     padding: 20px 36px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    background: rgba(6,9,19,0.35);
+    border-bottom: 1px solid var(--border-color);
+    background: #ffffff;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -209,7 +204,7 @@ body {
     gap: 8px;
     font-size: 0.85rem;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.05);
+    background: #f8fafc;
     padding: 6px 12px;
     border-radius: 20px;
     border: 1px solid var(--border-color);
@@ -236,7 +231,7 @@ body {
     height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.2);
+    background: #eef2f7;
 }
 ::-webkit-scrollbar-thumb {
     background: var(--border-color);
@@ -248,16 +243,16 @@ body {
 
 /* Component: Cards */
 .card {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    background: #ffffff;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 20px;
     box-shadow: var(--shadow-panel);
     margin-bottom: 20px;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-.card:hover { box-shadow: 0 8px 24px rgba(2,6,23,0.45); }
+.card:hover { box-shadow: 0 12px 30px rgba(15,23,42,0.08); }
 
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(10px); }
@@ -275,22 +270,22 @@ body {
 }
 
 .btn {
-    background: var(--bg-panel-hover);
+    background: #f8fafc;
     color: var(--text-primary);
-    border: 1px solid rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color);
     padding: 10px 16px;
     border-radius: 10px;
     cursor: pointer;
     font-family: var(--font-main);
     font-weight: 600;
     font-size: 0.95rem;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
     display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
-.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(2,6,23,0.35); }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15,23,42,0.08); background: #ffffff; }
 
 .btn:active { transform: translateY(0); }
 .btn.primary {
@@ -298,7 +293,7 @@ body {
     color: #fff;
     border: none;
 }
-.btn.primary:hover { filter:brightness(0.98); }
+.btn.primary:hover { filter:brightness(0.98); background: #1d4ed8; }
 
 .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -324,7 +319,7 @@ body {
 .form-group input, .form-group select {
     width: 100%;
     padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.2);
+    background: #ffffff;
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     border-radius: 8px;
@@ -335,8 +330,8 @@ body {
 .form-group input:focus, .form-group select:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.2);
-    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+    background: #ffffff;
 }
 
 /* Better select visuals and animations */
@@ -352,7 +347,7 @@ select {
     transition: box-shadow 0.18s ease, transform 0.12s ease;
 }
 select:focus, select.select-open {
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
     transform: translateY(-2px);
     border-color: var(--accent-primary);
 }
@@ -374,12 +369,12 @@ select option { padding: 6px 8px; }
 
 .data-table th {
     color: var(--text-secondary);
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.02);
+    font-weight: 600;
+    background: #f8fafc;
 }
 
 .data-table tr:hover td {
-    background: rgba(255, 255, 255, 0.03);
+    background: #f8fafc;
 }
 
 /* CodeMirror Override */
@@ -389,34 +384,34 @@ select option { padding: 6px 8px; }
     border: 1px solid var(--border-color);
     font-family: 'Consolas', 'Courier New', monospace;
     font-size: 14px;
-    box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+    box-shadow: none;
 }
 .CodeMirror-focused {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 1px var(--accent-primary), inset 0 2px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 0 0 1px var(--accent-primary);
 }
 
 /* FullCalendar Overrides */
 .fc-theme-standard .fc-scrollgrid { border-color: var(--border-color) !important; }
-.fc-theme-standard th { border-color: var(--border-color) !important; background: rgba(255,255,255,0.02); padding: 8px 0; }
+.fc-theme-standard th { border-color: var(--border-color) !important; background: #f8fafc; padding: 8px 0; }
 .fc-theme-standard td { border-color: var(--border-color) !important; }
 .fc .fc-button-primary {
-    background: var(--bg-panel) !important;
+    background: #f8fafc !important;
     border: 1px solid var(--border-color) !important;
     color: var(--text-primary) !important;
     text-transform: capitalize;
 }
 .fc .fc-button-primary:hover {
-    background: rgba(255,255,255,0.1) !important;
+    background: #ffffff !important;
 }
-.fc .fc-button-primary:disabled { background: rgba(0,0,0,0.2) !important; }
-.fc-day-today { background: rgba(0, 240, 255, 0.05) !important; }
+.fc .fc-button-primary:disabled { background: #f1f5f9 !important; }
+.fc-day-today { background: rgba(37, 99, 235, 0.04) !important; }
 .fc-timegrid-slot { height: 40px !important; }
 .fc-event {
     border-radius: 4px;
     border: none;
     padding: 2px 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(15,23,42,0.08);
 }
 
 /* Grid Layouts for views */
@@ -490,7 +485,7 @@ select option { padding: 6px 8px; }
     margin-bottom: 16px;
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    background: rgba(255,255,255,0.02);
+    background: #f8fafc;
     color: var(--text-secondary);
 }
 
@@ -503,7 +498,7 @@ select option { padding: 6px 8px; }
     padding: 4px 8px;
     border-radius: 999px;
     border: 1px solid var(--border-color);
-    background: rgba(255,255,255,0.02);
+    background: #ffffff;
 }
 
 .schedule-output {
@@ -512,10 +507,10 @@ select option { padding: 6px 8px; }
 
 .timetable-frame {
     min-width: 760px;
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    overflow: hidden;
-    background: rgba(255,255,255,0.02);
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    background: transparent;
 }
 
 .timetable-grid {
@@ -532,7 +527,7 @@ select option { padding: 6px 8px; }
 }
 
 .timetable-grid thead th {
-    background: rgba(255,255,255,0.04);
+    background: #f8fafc;
     color: var(--text-primary);
     font-weight: 700;
     text-align: center;
@@ -544,7 +539,7 @@ select option { padding: 6px 8px; }
 
 .timetable-time {
     width: 110px;
-    background: rgba(255,255,255,0.03);
+    background: #f8fafc;
     color: var(--text-primary);
     font-weight: 700;
     text-align: left;
@@ -565,11 +560,11 @@ select option { padding: 6px 8px; }
 }
 
 .timetable-cell--filled {
-    background: linear-gradient(180deg, rgba(37,99,235,0.10), rgba(37,99,235,0.04));
+    background: linear-gradient(180deg, rgba(37,99,235,0.08), rgba(37,99,235,0.03));
 }
 
 .timetable-cell--empty {
-    background: rgba(255,255,255,0.01);
+    background: #ffffff;
 }
 
 .timetable-course {
@@ -580,6 +575,27 @@ select option { padding: 6px 8px; }
 
 .timetable-meta {
     font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Make the schedule view feel like a clean spreadsheet rather than a boxed widget */
+.schedule-output .timetable-grid {
+    border-left: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
+}
+
+.schedule-output .timetable-grid th,
+.schedule-output .timetable-grid td {
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.schedule-output .timetable-grid td,
+.schedule-output .timetable-grid th {
+    background-clip: padding-box;
+}
+
+.schedule-output .empty-msg {
     color: var(--text-secondary);
 }
 
@@ -631,7 +647,7 @@ select option { padding: 6px 8px; }
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 20px;
+    background: #ffffff;
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
 }
@@ -642,8 +658,8 @@ select option { padding: 6px 8px; }
     padding: 12px 16px;
     background: rgba(0, 0, 0, 0.25);
     border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    border-radius: 8px;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+    background: #ffffff;
     font-family: var(--font-main);
     font-size: 0.9rem;
     transition: all 0.2s;

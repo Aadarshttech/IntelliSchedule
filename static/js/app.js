@@ -59,22 +59,13 @@ function router() {
 window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
-// Theme toggle: light (white) and default dark
-function applyTheme(theme){
-    if(theme === 'light') document.body.classList.add('light-theme');
-    else document.body.classList.remove('light-theme');
+// Force a white, clean UI.
+function applyTheme() {
+    document.body.classList.add('light-theme');
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-    const saved = localStorage.getItem('tt_theme') || 'dark';
-    applyTheme(saved);
+    applyTheme();
     const btn = document.getElementById('theme-toggle');
-    if(btn){
-        btn.addEventListener('click', ()=>{
-            const cur = document.body.classList.contains('light-theme') ? 'light' : 'dark';
-            const next = cur === 'light' ? 'dark' : 'light';
-            applyTheme(next);
-            localStorage.setItem('tt_theme', next);
-        });
-    }
+    if (btn) btn.style.display = 'none';
 });
