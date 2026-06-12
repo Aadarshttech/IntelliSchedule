@@ -21,4 +21,13 @@ const api = {
         }
         return res.json();
     }
+    ,
+    async delete(endpoint) {
+        const res = await fetch(`${API_BASE}${endpoint}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(err.detail || JSON.stringify(err));
+        }
+        return res.json();
+    }
 };

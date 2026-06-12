@@ -1,9 +1,12 @@
 const routes = {
     '/dashboard': DashboardView,
     '/data': DataInputView,
-    '/dsl': DslEditorView,
     '/schedule': ScheduleView,
     '/conflicts': ConflictsView
+};
+
+window.navigateTo = function(route) {
+    window.location.hash = '#' + route;
 };
 
 window.showToast = function(message, type = 'info') {
@@ -38,7 +41,6 @@ function router() {
     const subtitles = {
         '/dashboard': 'Overview of your timetable operations',
         '/data': 'Manage courses, rooms, and constraints data',
-        '/dsl': 'Write and validate your timetable rules',
         '/schedule': 'Generate and view the final timetable',
         '/conflicts': 'Review solver infeasibilities and warnings'
     };
@@ -56,3 +58,23 @@ function router() {
 
 window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
+
+// Theme toggle: light (white) and default dark
+function applyTheme(theme){
+    if(theme === 'light') document.body.classList.add('light-theme');
+    else document.body.classList.remove('light-theme');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+    const saved = localStorage.getItem('tt_theme') || 'dark';
+    applyTheme(saved);
+    const btn = document.getElementById('theme-toggle');
+    if(btn){
+        btn.addEventListener('click', ()=>{
+            const cur = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            const next = cur === 'light' ? 'dark' : 'light';
+            applyTheme(next);
+            localStorage.setItem('tt_theme', next);
+        });
+    }
+});

@@ -5,7 +5,7 @@ class CourseBase(BaseModel):
     name: str
     sessions_per_week: int
     room_type: str
-    enrollment_count: int
+    enrollment_count: int = 0
 
 class CourseCreate(CourseBase):
     pass
@@ -16,17 +16,31 @@ class CourseResponse(CourseBase):
         orm_mode = True
         from_attributes = True
 
+class StudentGroupBase(BaseModel):
+    name: str
+    size: int
+
+class StudentGroupCreate(StudentGroupBase):
+    course_ids: List[int] = []
+
+class StudentGroupResponse(StudentGroupBase):
+    id: int
+    courses: List[CourseResponse] = []
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 class InstructorBase(BaseModel):
     name: str
-    department: str
-    max_weekly_hours: int
 
 class InstructorCreate(InstructorBase):
     course_ids: List[int] = []
+    group_ids: List[int] = []
 
 class InstructorResponse(InstructorBase):
     id: int
     courses: List[CourseResponse] = []
+    groups: List[StudentGroupResponse] = []
     class Config:
         orm_mode = True
         from_attributes = True
@@ -59,22 +73,8 @@ class TimeSlotResponse(TimeSlotBase):
         orm_mode = True
         from_attributes = True
 
-class StudentGroupBase(BaseModel):
-    name: str
-    size: int
-
-class StudentGroupCreate(StudentGroupBase):
-    course_ids: List[int] = []
-
-class StudentGroupResponse(StudentGroupBase):
-    id: int
-    courses: List[CourseResponse] = []
-    class Config:
-        orm_mode = True
-        from_attributes = True
-
 class ScheduleGenerateRequest(BaseModel):
-    dsl_text: str
+    dsl_text: Optional[str] = ""
     time_limit_seconds: Optional[int] = 30
 
 class ScheduleEntryResponse(BaseModel):

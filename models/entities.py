@@ -9,6 +9,13 @@ instructor_course_table = Table(
     Column('course_id', Integer, ForeignKey('courses.id'), primary_key=True)
 )
 
+instructor_group_table = Table(
+    'instructor_group',
+    Base.metadata,
+    Column('instructor_id', Integer, ForeignKey('instructors.id'), primary_key=True),
+    Column('group_id', Integer, ForeignKey('student_groups.id'), primary_key=True)
+)
+
 group_course_table = Table(
     'group_course',
     Base.metadata,
@@ -28,9 +35,8 @@ class Instructor(Base):
     __tablename__ = "instructors"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
-    department = Column(String)
-    max_weekly_hours = Column(Integer)
     courses = relationship("Course", secondary=instructor_course_table)
+    groups = relationship("StudentGroup", secondary=instructor_group_table)
     availabilities = relationship("InstructorAvailability", back_populates="instructor", cascade="all, delete-orphan")
 
 class Room(Base):

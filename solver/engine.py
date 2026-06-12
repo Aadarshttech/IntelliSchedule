@@ -42,6 +42,14 @@ class TimetableSolver:
                 self.model.AddAtMostOne(
                     [self.variables[(c["id"], r["id"], s["id"])] for c in courses_taught for r in self.rooms]
                 )
+
+        # Student groups cannot have overlapping classes
+        for group in self.groups:
+            group_courses = [c for c in self.courses if c["id"] in group.get("courses", [])]
+            for s in self.timeslots:
+                self.model.AddAtMostOne(
+                    [self.variables[(c["id"], r["id"], s["id"])] for c in group_courses for r in self.rooms]
+                )
                 
         for c in self.courses:
             for r in self.rooms:
@@ -76,8 +84,20 @@ class TimetableSolver:
                 for r in self.rooms:
                     for s in self.timeslots:
                         if solver.Value(self.variables[(c["id"], r["id"], s["id"])]):
-                            instructor_id = next((i["id"] for i in self.instructors if c["id"] in i.get("courses", [])), None)
                             group_ids = [g["id"] for g in self.groups if c["id"] in g.get("courses", [])]
+                            
+                            # Find instructor who teaches this course and teaches at least one of the groups (if group assignments exist)
+                            instructor_id = None
+                            for i in self.instructors:
+                                if c["id"] in i.get("courses", []):
+                                    i_groups = i.get("groups", [])
+                                    if not i_groups or any(g_id in i_groups for g_id in group_ids):
+                                        instructor_id = i["id"]
+                                        break
+                            
+                            # Fallback if no matching instructor found
+                            if not instructor_id:
+                                instructor_id = next((i["id"] for i in self.instructors if c["id"] in i.get("courses", [])), None)
                             
                             schedule.append({
                                 "course_id": c["id"],

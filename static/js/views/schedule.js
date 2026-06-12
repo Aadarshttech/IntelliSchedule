@@ -7,10 +7,13 @@ const ScheduleView = {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         Generated Output
                     </h3>
-                    <button class="btn primary" id="generate-btn">
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn primary" id="generate-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                         Generate Timetable
-                    </button>
+                        </button>
+                        <button class="btn" id="print-white">Printable View</button>
+                    </div>
                 </div>
                 <div id="calendar-wrapper" style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
                     <div id="calendar"></div>
@@ -115,6 +118,35 @@ const ScheduleView = {
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
             }
+        });
+
+        document.getElementById('print-white').addEventListener('click', async ()=>{
+            try{
+                const latest = await api.get('/schedule/latest');
+                const entries = latest && latest.entries ? latest.entries : [];
+                // build simple printable white table grouped by day/time
+                const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                const times = [...new Set(entries.map(en=>en.timeslot.start_time))].sort();
+
+                let html = `<!doctype html><html><head><meta charset="utf-8"><title>Printable Timetable</title><style>body{font-family:Arial,Helvetica,sans-serif;margin:20px;color:#0b1220}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f3f4f6}</style></head><body>`;
+                html += `<h2>Timetable</h2>`;
+                html += `<table><tr><th>Time</th>` + days.map(d=>`<th>${d}</th>`).join('') + `</tr>`;
+                const slots = Array.from(new Set(entries.map(e=>e.timeslot.start_time))).sort();
+                for(const t of slots){
+                    html += `<tr><td>${t}</td>`;
+                    for(const d of days){
+                        const match = entries.find(en => en.timeslot.start_time===t && en.timeslot.day.toLowerCase()===d.toLowerCase());
+                        if(match){
+                            html += `<td><strong>${match.course.name}</strong><br>${match.instructor?match.instructor.name:'TBA'}<br>${match.room?match.room.name:''}</td>`;
+                        } else html += `<td></td>`;
+                    }
+                    html += `</tr>`;
+                }
+                html += `</table></body></html>`;
+                const w = window.open('', '_blank');
+                w.document.write(html);
+                w.document.close();
+            } catch(e){ window.showToast('Cannot create printable view: '+e.message,'error'); }
         });
         
         // Add spinner CSS if not present

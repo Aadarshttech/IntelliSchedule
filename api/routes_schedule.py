@@ -17,8 +17,20 @@ transformer = DSLTransformer()
 def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db)):
     courses = [{"id": c.id, "name": c.name, "sessions_per_week": c.sessions_per_week, "students": c.enrollment_count, "room_type": c.room_type} for c in db.query(Course).all()]
     rooms = [{"id": r.id, "name": r.name, "capacity": r.capacity, "room_type": r.room_type} for r in db.query(Room).all()]
-    instructors = [{"id": i.id, "name": i.name, "courses": [c.id for c in i.courses]} for i in db.query(Instructor).all()]
-    timeslots = [{"id": t.id, "day": t.day, "start_time": t.start_time, "end_time": t.end_time} for t in db.query(TimeSlot).all()]
+    instructors = [{"id": i.id, "name": i.name, "courses": [c.id for c in i.courses], "groups": [g.id for g in i.groups]} for i in db.query(Instructor).all()]
+    
+    # Auto-generate default timeslots if empty
+    ts_db = db.query(TimeSlot).all()
+    if not ts_db:
+        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+        hours = [("09:00", "10:00"), ("10:00", "11:00"), ("11:00", "12:00"), ("13:00", "14:00"), ("14:00", "15:00"), ("15:00", "16:00")]
+        for day in days:
+            for start, end in hours:
+                db.add(TimeSlot(day=day, start_time=start, end_time=end))
+        db.commit()
+        ts_db = db.query(TimeSlot).all()
+        
+    timeslots = [{"id": t.id, "day": t.day, "start_time": t.start_time, "end_time": t.end_time} for t in ts_db]
     groups = [{"id": g.id, "name": g.name, "courses": [c.id for c in g.courses]} for g in db.query(StudentGroup).all()]
     
     constraints = []
@@ -50,7 +62,7 @@ def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db
                     mapped_p["course"] = course_map[mapped_p["course"]]
                 preferences.append(mapped_p)
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"DSL Error: {str(e)}")
+            print(f"DSL Warning: {str(e)} - Ignoring DSL constraints")
 
     data = {
         "courses": courses,
@@ -73,24 +85,28 @@ def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db
     db.flush()
     
     for entry in result["schedule"]:
-        db_entry = ScheduleEntry(
-            schedule_id=new_sched.id,
-            course_id=entry["course_id"],
-            room_id=entry["room_id"],
-            timeslot_id=entry["timeslot_id"],
-            instructor_id=entry["instructor_id"]
-        )
-        db.add(db_entry)
-        for g_id in entry.get("group_ids", []):
-            group_entry = ScheduleEntry(
+        group_ids = entry.get("group_ids", [])
+        if not group_ids:
+            db_entry = ScheduleEntry(
                 schedule_id=new_sched.id,
                 course_id=entry["course_id"],
                 room_id=entry["room_id"],
                 timeslot_id=entry["timeslot_id"],
                 instructor_id=entry["instructor_id"],
-                group_id=g_id
+                group_id=None
             )
-            db.add(group_entry)
+            db.add(db_entry)
+        else:
+            for g_id in group_ids:
+                group_entry = ScheduleEntry(
+                    schedule_id=new_sched.id,
+                    course_id=entry["course_id"],
+                    room_id=entry["room_id"],
+                    timeslot_id=entry["timeslot_id"],
+                    instructor_id=entry["instructor_id"],
+                    group_id=g_id
+                )
+                db.add(group_entry)
             
     db.commit()
     db.refresh(new_sched)

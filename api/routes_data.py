@@ -9,6 +9,40 @@ from typing import List
 
 router = APIRouter()
 
+
+# Assign instructor/course to a group (batch)
+@router.post("/assign")
+def assign_instructor_course(payload: dict, db: Session = Depends(get_db)):
+    # Expected payload: {"group_id": int, "instructor_id": int, "course_id": int}
+    g_id = payload.get('group_id')
+    i_id = payload.get('instructor_id')
+    c_id = payload.get('course_id')
+    if not (g_id and i_id and c_id):
+        raise HTTPException(status_code=400, detail="group_id, instructor_id and course_id are required")
+
+    group = db.query(StudentGroup).filter(StudentGroup.id == g_id).first()
+    instructor = db.query(Instructor).filter(Instructor.id == i_id).first()
+    course = db.query(Course).filter(Course.id == c_id).first()
+    if not group or not instructor or not course:
+        raise HTTPException(status_code=404, detail="group, instructor or course not found")
+
+    # Ensure group has the course
+    if course not in group.courses:
+        group.courses.append(course)
+
+    # Ensure instructor teaches the course
+    if course not in instructor.courses:
+        instructor.courses.append(course)
+
+    # Ensure instructor is associated with the group
+    if group not in instructor.groups:
+        instructor.groups.append(group)
+
+    db.add(group)
+    db.add(instructor)
+    db.commit()
+    return {"status": "ok"}
+
 # Courses
 @router.get("/courses", response_model=List[CourseResponse])
 def get_courses(db: Session = Depends(get_db)):
@@ -42,10 +76,13 @@ def get_instructors(db: Session = Depends(get_db)):
 
 @router.post("/instructors", response_model=InstructorResponse)
 def create_instructor(instructor: InstructorCreate, db: Session = Depends(get_db)):
-    db_instructor = Instructor(name=instructor.name, department=instructor.department, max_weekly_hours=instructor.max_weekly_hours)
+    db_instructor = Instructor(name=instructor.name)
     for c_id in instructor.course_ids:
         c = db.query(Course).filter(Course.id == c_id).first()
         if c: db_instructor.courses.append(c)
+    for g_id in instructor.group_ids:
+        g = db.query(StudentGroup).filter(StudentGroup.id == g_id).first()
+        if g: db_instructor.groups.append(g)
     db.add(db_instructor)
     db.commit()
     db.refresh(db_instructor)
@@ -79,3 +116,41 @@ def create_group(group: StudentGroupCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_group)
     return db_group
+
+
+# Delete endpoints for CRUD
+@router.delete('/courses/{course_id}')
+def delete_course(course_id: int, db: Session = Depends(get_db)):
+    c = db.query(Course).filter(Course.id == course_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail='Course not found')
+    db.delete(c)
+    db.commit()
+    return {'status': 'deleted'}
+
+@router.delete('/rooms/{room_id}')
+def delete_room(room_id: int, db: Session = Depends(get_db)):
+    r = db.query(Room).filter(Room.id == room_id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail='Room not found')
+    db.delete(r)
+    db.commit()
+    return {'status': 'deleted'}
+
+@router.delete('/instructors/{inst_id}')
+def delete_instructor(inst_id: int, db: Session = Depends(get_db)):
+    i = db.query(Instructor).filter(Instructor.id == inst_id).first()
+    if not i:
+        raise HTTPException(status_code=404, detail='Instructor not found')
+    db.delete(i)
+    db.commit()
+    return {'status': 'deleted'}
+
+@router.delete('/groups/{group_id}')
+def delete_group(group_id: int, db: Session = Depends(get_db)):
+    g = db.query(StudentGroup).filter(StudentGroup.id == group_id).first()
+    if not g:
+        raise HTTPException(status_code=404, detail='Group not found')
+    db.delete(g)
+    db.commit()
+    return {'status': 'deleted'}
