@@ -16,54 +16,69 @@ const DataInputView = {
                     <div id="courses-list" class="entity-list">Loading courses...</div>
                 </div>
 
-                <!-- Rooms Form & List -->
-                <div class="card">
-                    <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg> Classrooms</h3>
-                    <form id="form-room" class="crud-form">
-                        <input type="text" id="room-name" placeholder="Room Name (e.g., Lab 1)" required>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="number" id="room-capacity" placeholder="Capacity" required min="1">
-                            <input type="text" id="room-type" placeholder="Type (e.g., Lab)" required>
+                        <!-- Reordered flow: Batch first, then Instructor, then Course/Room -->
+                        <div class="grid-2" style="margin-bottom: 24px;">
+                            <!-- Batches Form & List (first step) -->
+                            <div class="card">
+                                <h3>Student Batches</h3>
+                                <form id="form-group" class="crud-form">
+                                    <input type="text" id="group-name" placeholder="Batch Name (e.g., 2024-A)" required>
+                                    <input type="number" id="group-size" placeholder="Batch Size" required min="1">
+                                    <select id="group-courses" multiple style="height: 80px; margin-top:8px;">
+                                        <option value="" disabled>Loading courses...</option>
+                                    </select>
+                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Batch</button>
+                                </form>
+                                <div id="groups-list" class="entity-list">Loading batches...</div>
+                            </div>
+
+                            <!-- Instructors Form & List (enabled after at least one batch exists) -->
+                            <div class="card" id="instructor-card">
+                                <h3>Teachers</h3>
+                                <form id="form-instructor" class="crud-form">
+                                    <input type="text" id="inst-name" placeholder="Teacher Name" required>
+                                    <select id="inst-groups" multiple style="height: 60px; margin-top:8px;">
+                                        <option value="" disabled>Loading batches...</option>
+                                    </select>
+                                    <select id="inst-courses" multiple style="height: 60px; margin-top:8px;">
+                                        <option value="" disabled>Loading courses...</option>
+                                    </select>
+                                    <small style="color: var(--text-secondary); display: block;">Hold Ctrl to select multiple batches/courses.</small>
+                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Teacher</button>
+                                </form>
+                                <div id="instructors-list" class="entity-list">Loading instructors...</div>
+                            </div>
                         </div>
-                        <button type="submit" class="btn primary" style="width: 100%;">+ Add Room</button>
-                    </form>
-                    <div id="rooms-list" class="entity-list">Loading rooms...</div>
-                </div>
-            </div>
 
-            <div class="grid-2">
-                <!-- Instructors Form & List -->
-                <div class="card">
-                    <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Teachers</h3>
-                    <form id="form-instructor" class="crud-form">
-                        <input type="text" id="inst-name" placeholder="Teacher Name" required>
-                        <select id="inst-courses" multiple style="height: 60px;">
-                            <option value="" disabled>Loading courses...</option>
-                        </select>
-                        <select id="inst-groups" multiple style="height: 60px; margin-top:8px;">
-                            <option value="" disabled>Loading batches...</option>
-                        </select>
-                        <small style="color: var(--text-secondary); display: block;">Hold Ctrl to select multiple courses.</small>
-                        <button type="submit" class="btn primary" style="width: 100%;">+ Add Teacher</button>
-                    </form>
-                    <div id="instructors-list" class="entity-list">Loading instructors...</div>
-                </div>
-            </div>
+                        <div class="grid-2">
+                            <!-- Courses Form & List (enabled after at least one instructor exists) -->
+                            <div class="card" id="course-card">
+                                <h3>Courses</h3>
+                                <form id="form-course" class="crud-form">
+                                    <input type="text" id="course-name" placeholder="Course Name (e.g., CS101)" required>
+                                    <input type="text" id="course-type" placeholder="Room Type Required (e.g., Lecture)" required>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="number" id="course-sessions" placeholder="Sessions/Week" required min="1">
+                                    </div>
+                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Course</button>
+                                </form>
+                                <div id="courses-list" class="entity-list">Loading courses...</div>
+                            </div>
 
-            <div class="grid-2">
-                <!-- Batches Form & List -->
-                <div class="card">
-                    <h3>Student Batches</h3>
-                    <form id="form-group" class="crud-form">
-                        <input type="text" id="group-name" placeholder="Batch Name (e.g., 2024-A)" required>
-                        <input type="number" id="group-size" placeholder="Batch Size" required min="1">
-                        <select id="group-courses" multiple style="height: 80px; margin-top:8px;">
-                            <option value="" disabled>Loading courses...</option>
-                        </select>
-                        <button type="submit" class="btn primary" style="width: 100%;">+ Add Batch</button>
-                    </form>
-                    <div id="groups-list" class="entity-list">Loading batches...</div>
-                </div>
+                            <!-- Rooms Form & List -->
+                            <div class="card">
+                                <h3>Classrooms</h3>
+                                <form id="form-room" class="crud-form">
+                                    <input type="text" id="room-name" placeholder="Room Name (e.g., Lab 1)" required>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="number" id="room-capacity" placeholder="Capacity" required min="1">
+                                        <input type="text" id="room-type" placeholder="Type (e.g., Lab)" required>
+                                    </div>
+                                    <button type="submit" class="btn primary" style="width: 100%">+ Add Room</button>
+                                </form>
+                                <div id="rooms-list" class="entity-list">Loading rooms...</div>
+                            </div>
+                        </div>
 
                 <!-- Assignments: which teacher teaches which course for a batch -->
                 <div class="card">
@@ -126,11 +141,41 @@ const DataInputView = {
                 else groupCourses.innerHTML = '<option value="" disabled>Add courses first</option>';
             }
 
+            // Style selects: add open class on focus for subtle animation
+            ['inst-courses','inst-groups','group-courses','assign-group','assign-instructor','assign-course'].forEach(id => {
+                const el = document.getElementById(id);
+                if(!el) return;
+                el.addEventListener('focus', ()=> el.classList.add('select-open'));
+                el.addEventListener('blur', ()=> el.classList.remove('select-open'));
+            });
+
             const groupSelect = document.getElementById('inst-groups');
             if (groups && groups.length) {
                 groupSelect.innerHTML = groups.map(g => '<option value="' + g.id + '">' + g.name + '</option>').join('');
             } else {
                 groupSelect.innerHTML = '<option value="" disabled>Add batches first</option>';
+            }
+
+            // Enable/disable cards based on workflow: must have batch -> instructor -> course
+            const instructorCard = document.getElementById('instructor-card');
+            const courseCard = document.getElementById('course-card');
+            if (!groups || groups.length === 0) {
+                // disable instructor and course forms
+                instructorCard.classList.add('disabled-card');
+                courseCard.classList.add('disabled-card');
+                // disable form controls
+                instructorCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = true);
+                courseCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = true);
+            } else if (!instructors || instructors.length === 0) {
+                instructorCard.classList.remove('disabled-card');
+                courseCard.classList.add('disabled-card');
+                instructorCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
+                courseCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = true);
+            } else {
+                instructorCard.classList.remove('disabled-card');
+                courseCard.classList.remove('disabled-card');
+                instructorCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
+                courseCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
             }
             
             // Render Rooms

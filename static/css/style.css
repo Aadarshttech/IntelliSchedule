@@ -38,6 +38,14 @@ body.light-theme {
     --shadow-panel: 0 6px 18px rgba(16,24,40,0.06);
 }
 
+/* Fix top header tint in light theme */
+body.light-theme .main-header {
+    background: #ffffff;
+    border-bottom: 1px solid rgba(15,23,42,0.04);
+}
+body.light-theme .sidebar { background: #ffffff; }
+body.light-theme .card { background: #ffffff; color: var(--text-primary); }
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -357,6 +365,25 @@ body {
     background: rgba(0, 0, 0, 0.4);
 }
 
+/* Better select visuals and animations */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%), linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 12px) calc(1em + 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
+    transition: box-shadow 0.18s ease, transform 0.12s ease;
+}
+select:focus, select.select-open {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    transform: translateY(-2px);
+    border-color: var(--accent-primary);
+}
+select option { padding: 6px 8px; }
+
 /* Component: Tables */
 .data-table {
     width: 100%;
@@ -526,4 +553,7 @@ body {
     text-align: center;
     font-style: italic;
 }
+
+/* Disabled card state for workflow enforcement */
+.disabled-card { opacity: 0.6; pointer-events: none; filter: grayscale(6%); }
 
