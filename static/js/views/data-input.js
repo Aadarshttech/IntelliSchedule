@@ -120,27 +120,15 @@ const DataInputView = {
                 groupDiv.innerHTML = '<div class="empty-msg">Add batches first</div>';
             }
 
-            // Enable/disable cards based on workflow: must have batch -> instructor -> course
+            // Keep forms enabled so user can add Teachers/Courses even without batches.
+            // We still show helpful empty messages in the checkbox lists when there is no data.
             const instructorCard = document.getElementById('instructor-card');
             const courseCard = document.getElementById('course-card');
-            if (!groups || groups.length === 0) {
-                // disable instructor and course forms
-                instructorCard.classList.add('disabled-card');
-                courseCard.classList.add('disabled-card');
-                // disable form controls
-                instructorCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = true);
-                courseCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = true);
-            } else if (!instructors || instructors.length === 0) {
-                instructorCard.classList.remove('disabled-card');
-                courseCard.classList.add('disabled-card');
-                instructorCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
-                courseCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = true);
-            } else {
-                instructorCard.classList.remove('disabled-card');
-                courseCard.classList.remove('disabled-card');
-                instructorCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
-                courseCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
-            }
+            if (instructorCard) instructorCard.classList.remove('disabled-card');
+            if (courseCard) courseCard.classList.remove('disabled-card');
+            // Ensure controls are enabled
+            if (instructorCard) instructorCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
+            if (courseCard) courseCard.querySelectorAll('input,select,button').forEach(el=>el.disabled = false);
             
             // Render Rooms
             if (rooms.length) {
