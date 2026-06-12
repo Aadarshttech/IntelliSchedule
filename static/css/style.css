@@ -625,14 +625,16 @@ select option { padding: 6px 8px; }
     pointer-events: none;
 }
 .toast {
-    background: var(--bg-panel);
+    background: #ffffff;
+    border: 1px solid var(--border-color);
     border-left: 4px solid var(--accent-primary);
-    padding: 16px 20px;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    backdrop-filter: blur(10px);
+    padding: 14px 18px;
+    border-radius: 12px;
+    min-width: 260px;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.10);
     animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    color: white;
+    color: var(--text-primary);
+    font-weight: 600;
     pointer-events: auto;
 }
 .toast.error { border-left-color: var(--accent-danger); }
