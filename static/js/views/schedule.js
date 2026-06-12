@@ -3,7 +3,9 @@ const ScheduleView = {
         groups: [],
         courses: [],
         instructors: [],
-        currentGrid: null,
+        rooms: [],
+        currentSchedules: {},
+        currentGroupId: null,
         currentTitle: ''
     },
 
@@ -13,7 +15,7 @@ const ScheduleView = {
                 <div class="schedule-builder__header">
                     <div>
                         <h3 style="margin-bottom:6px;">Schedule Output</h3>
-                        <p class="schedule-builder__subtitle">Pick a batch, set the time range, choose class length, and generate a fixed weekly timetable.</p>
+                        <p class="schedule-builder__subtitle">Pick a batch, set the time range, choose class length, and build a fixed timetable. The generator schedules all batches together so teachers and rooms do not collide.</p>
                     </div>
                     <div class="schedule-builder__actions">
                         <button class="btn primary" id="build-schedule-btn">Build Timetable</button>
@@ -43,7 +45,7 @@ const ScheduleView = {
                 </div>
 
                 <div class="schedule-summary" id="schedule-summary">
-                    Select a batch to see its courses.
+                    Select a batch to preview its timetable.
                 </div>
 
                 <div id="schedule-output" class="schedule-output">
@@ -57,7 +59,6 @@ const ScheduleView = {
         const scheduleGroup = document.getElementById('schedule-group');
         const scheduleSummary = document.getElementById('schedule-summary');
         const scheduleOutput = document.getElementById('schedule-output');
-
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
         const minutesFromTime = (timeStr) => {
@@ -71,29 +72,30 @@ const ScheduleView = {
             return `${String(hours).padStart(2, '0')}.${String(minutes).padStart(2, '0')}`;
         };
 
-        const instructorNameForCourse = (courseId) => {
-            const match = this.state.instructors.find((instructor) =>
-                (instructor.courses || []).some((course) => course.id === courseId)
-            );
-            return match ? match.name : '';
+        const hashText = (text) => {
+            let hash = 0;
+            for (let index = 0; index < text.length; index += 1) {
+                hash = ((hash << 5) - hash) + text.charCodeAt(index);
+                hash |= 0;
+            }
+            return Math.abs(hash);
         };
 
-        const buildSessionQueue = (group) => {
-            const queue = [];
-            (group.courses || []).forEach((course) => {
-                const sessions = Math.max(parseInt(course.sessions_per_week || 1, 10), 1);
-                for (let index = 0; index < sessions; index += 1) {
-                    queue.push({
-                        courseId: course.id,
-                        courseName: course.name,
-                        instructorName: instructorNameForCourse(course.id)
-                    });
-                }
-            });
-            return queue;
+        const seededShuffle = (items, seedText) => {
+            const result = items.slice();
+            let seed = hashText(seedText) || 1;
+            const random = () => {
+                seed = (seed * 1664525 + 1013904223) % 4294967296;
+                return seed / 4294967296;
+            };
+            for (let index = result.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(random() * (index + 1));
+                [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+            }
+            return result;
         };
 
-        const renderGrid = (group, startTime, endTime, slotMinutes) => {
+        const buildSlots = (startTime, endTime, slotMinutes) => {
             const startMinutes = minutesFromTime(startTime);
             const endMinutes = minutesFromTime(endTime);
 
@@ -101,63 +103,190 @@ const ScheduleView = {
                 throw new Error('End time must be after start time.');
             }
 
-            if (slotMinutes < 15) {
-                throw new Error('Class length should be at least 15 minutes.');
-            }
-
             const rows = [];
             for (let cursor = startMinutes; cursor + slotMinutes <= endMinutes; cursor += slotMinutes) {
                 rows.push({
+                    startMinutes: cursor,
+                    endMinutes: cursor + slotMinutes,
                     startLabel: timeFromMinutes(cursor),
                     endLabel: timeFromMinutes(cursor + slotMinutes)
                 });
             }
 
-            const queue = buildSessionQueue(group);
-            const cells = rows.length * days.length;
-            const timetable = Array.from({ length: rows.length }, () => Array(days.length).fill(null));
-
-            for (let index = 0; index < Math.min(queue.length, cells); index += 1) {
-                const rowIndex = Math.floor(index / days.length);
-                const dayIndex = index % days.length;
-                timetable[rowIndex][dayIndex] = queue[index];
+            if (!rows.length) {
+                throw new Error('The time range is too small for the chosen class length.');
             }
 
-            if (queue.length > cells) {
-                window.showToast('Not enough timetable slots for all sessions. Some classes were left out.', 'error');
-            }
+            return rows;
+        };
 
-            const header = days.map((day) => `<th>${day}</th>`).join('');
-            let rowsHtml = '';
+        const roomOptionsForGroup = (group) => {
+            const suitableRooms = this.state.rooms.filter((room) => Number(room.capacity || 0) >= Number(group.size || 0));
+            return suitableRooms.length ? suitableRooms : this.state.rooms;
+        };
 
-            rows.forEach((row, rowIndex) => {
-                rowsHtml += `<tr><th class="timetable-time">${row.startLabel}<span>${row.endLabel}</span></th>`;
-                days.forEach((day, dayIndex) => {
-                    const cell = timetable[rowIndex][dayIndex];
-                    if (cell) {
-                        rowsHtml += `
-                            <td class="timetable-cell timetable-cell--filled">
-                                <div class="timetable-course">${cell.courseName}</div>
-                                <div class="timetable-meta">${cell.instructorName || 'TBA'}</div>
-                            </td>
-                        `;
-                    } else {
-                        rowsHtml += `<td class="timetable-cell timetable-cell--empty"></td>`;
+        const instructorOptionsForSession = (courseId, groupId) => {
+            const courseInstructors = this.state.instructors.filter((instructor) =>
+                (instructor.courses || []).some((course) => course.id === courseId)
+            );
+
+            const groupPreferred = courseInstructors.filter((instructor) =>
+                !instructor.groups || instructor.groups.length === 0 || instructor.groups.some((group) => group.id === groupId)
+            );
+
+            return groupPreferred.length ? groupPreferred : courseInstructors;
+        };
+
+        const buildSessionList = () => {
+            const sessions = [];
+
+            this.state.groups.forEach((group) => {
+                const roomCount = roomOptionsForGroup(group).length || 0;
+                (group.courses || []).forEach((course) => {
+                    const sessionCount = Math.max(parseInt(course.sessions_per_week || 1, 10), 1);
+                    const instructorCount = instructorOptionsForSession(course.id, group.id).length || 0;
+                    const pressure = (roomCount || 99) + (instructorCount || 99) + sessionCount;
+
+                    for (let index = 0; index < sessionCount; index += 1) {
+                        sessions.push({
+                            sessionKey: `${group.id}-${course.id}-${index}`,
+                            groupId: group.id,
+                            groupName: group.name,
+                            groupSize: group.size,
+                            courseId: course.id,
+                            courseName: course.name,
+                            instructorCandidates: instructorOptionsForSession(course.id, group.id),
+                            roomCandidates: roomOptionsForGroup(group),
+                            priority: pressure
+                        });
                     }
                 });
-                rowsHtml += '</tr>';
             });
 
-            const groupName = group.name;
-            this.state.currentTitle = `${groupName} timetable`;
-            this.state.currentGrid = { group, startTime, endTime, slotMinutes, rows, timetable };
+            const buckets = new Map();
+            sessions.forEach((session) => {
+                const bucketKey = String(session.priority);
+                if (!buckets.has(bucketKey)) buckets.set(bucketKey, []);
+                buckets.get(bucketKey).push(session);
+            });
 
-            scheduleSummary.innerHTML = `
-                <strong>${groupName}</strong>
-                <span>${group.size} students</span>
-                <span>${group.courses.length} course(s)</span>
-                <span>${rows.length} time slot(s) across ${days.length} days</span>
-            `;
+            const ordered = [];
+            Array.from(buckets.keys()).sort((a, b) => Number(a) - Number(b)).forEach((bucketKey) => {
+                const bucket = buckets.get(bucketKey);
+                ordered.push(...seededShuffle(bucket, bucketKey));
+            });
+
+            return ordered;
+        };
+
+        const allocateSchedule = (startTime, endTime, slotMinutes) => {
+            const slots = buildSlots(startTime, endTime, slotMinutes);
+            const slotCount = slots.length * days.length;
+            const sessionList = buildSessionList();
+
+            const groupGrids = new Map();
+            const groupAssignments = new Map();
+            this.state.groups.forEach((group) => {
+                groupGrids.set(group.id, Array.from({ length: slots.length }, () => Array(days.length).fill(null)));
+                groupAssignments.set(group.id, []);
+            });
+
+            const occupiedRooms = new Set();
+            const occupiedInstructors = new Set();
+            const occupiedGroups = new Set();
+
+            let assignedCount = 0;
+            let skippedCount = 0;
+
+            sessionList.forEach((session, sessionIndex) => {
+                const startOffset = (hashText(session.sessionKey) + sessionIndex) % slotCount;
+                let placed = false;
+
+                for (let attempt = 0; attempt < slotCount; attempt += 1) {
+                    const slotIndex = (startOffset + attempt) % slotCount;
+                    const rowIndex = Math.floor(slotIndex / days.length);
+                    const dayIndex = slotIndex % days.length;
+                    const slot = slots[rowIndex];
+                    const slotKey = `${days[dayIndex]}|${slot.startLabel}`;
+                    const groupKey = `${session.groupId}|${slotKey}`;
+
+                    if (occupiedGroups.has(groupKey)) {
+                        continue;
+                    }
+
+                    const room = session.roomCandidates.find((candidate) => !occupiedRooms.has(`${candidate.id}|${slotKey}`));
+                    if (!room) {
+                        continue;
+                    }
+
+                    const instructor = session.instructorCandidates.find((candidate) => !occupiedInstructors.has(`${candidate.id}|${slotKey}`));
+
+                    occupiedGroups.add(groupKey);
+                    occupiedRooms.add(`${room.id}|${slotKey}`);
+                    if (instructor) {
+                        occupiedInstructors.add(`${instructor.id}|${slotKey}`);
+                    }
+
+                    const grid = groupGrids.get(session.groupId);
+                    const assignment = {
+                        courseId: session.courseId,
+                        courseName: session.courseName,
+                        instructorName: instructor ? instructor.name : 'TBA',
+                        roomName: room.name,
+                        startLabel: slot.startLabel,
+                        endLabel: slot.endLabel,
+                        dayName: days[dayIndex]
+                    };
+
+                    grid[rowIndex][dayIndex] = assignment;
+                    groupAssignments.get(session.groupId).push(assignment);
+                    assignedCount += 1;
+                    placed = true;
+                    break;
+                }
+
+                if (!placed) {
+                    skippedCount += 1;
+                }
+            });
+
+            return {
+                slots,
+                groupGrids,
+                groupAssignments,
+                assignedCount,
+                skippedCount,
+                totalSessions: sessionList.length
+            };
+        };
+
+        const renderGroupGrid = (groupId) => {
+            const scheduleData = this.state.currentSchedules[groupId];
+            const group = this.state.groups.find((item) => item.id === groupId);
+
+            if (!group || !scheduleData) {
+                scheduleOutput.innerHTML = '<div class="empty-msg" style="padding: 28px 0;">Build the timetable to preview a batch grid.</div>';
+                return;
+            }
+
+            const rowsHtml = scheduleData.slots.map((slot, rowIndex) => {
+                const cells = days.map((dayName, dayIndex) => {
+                    const cell = scheduleData.groupGrids.get(groupId)[rowIndex][dayIndex];
+                    if (!cell) {
+                        return '<td class="timetable-cell timetable-cell--empty"></td>';
+                    }
+
+                    return `
+                        <td class="timetable-cell timetable-cell--filled">
+                            <div class="timetable-course">${cell.courseName}</div>
+                            <div class="timetable-meta">${cell.instructorName}</div>
+                            <div class="timetable-meta">${cell.roomName}</div>
+                        </td>
+                    `;
+                }).join('');
+
+                return `<tr><th class="timetable-time">${slot.startLabel}<span>${slot.endLabel}</span></th>${cells}</tr>`;
+            }).join('');
 
             scheduleOutput.innerHTML = `
                 <div class="timetable-frame">
@@ -165,43 +294,54 @@ const ScheduleView = {
                         <thead>
                             <tr>
                                 <th class="timetable-corner">Time</th>
-                                ${header}
+                                ${days.map((day) => `<th>${day}</th>`).join('')}
                             </tr>
                         </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
+                        <tbody>${rowsHtml}</tbody>
                     </table>
                 </div>
+            `;
+
+            this.state.currentGroupId = groupId;
+            this.state.currentTitle = `${group.name} timetable`;
+
+            scheduleSummary.innerHTML = `
+                <strong>${group.name}</strong>
+                <span>${group.size} students</span>
+                <span>${(group.courses || []).length} course(s)</span>
+                <span>${scheduleData.assignedCount}/${scheduleData.totalSessions} session(s) placed</span>
+                ${scheduleData.skippedCount ? `<span>${scheduleData.skippedCount} skipped</span>` : ''}
             `;
         };
 
         const renderEmptyState = (message) => {
             scheduleOutput.innerHTML = `<div class="empty-msg" style="padding: 28px 0;">${message}</div>`;
             scheduleSummary.textContent = message;
-            this.state.currentGrid = null;
+            this.state.currentSchedules = {};
+            this.state.currentGroupId = null;
             this.state.currentTitle = '';
         };
 
         try {
-            const [groups, courses, instructors] = await Promise.all([
+            const [groups, courses, instructors, rooms] = await Promise.all([
                 api.get('/data/groups'),
                 api.get('/data/courses'),
-                api.get('/data/instructors')
+                api.get('/data/instructors'),
+                api.get('/data/rooms')
             ]);
 
             this.state.groups = groups || [];
             this.state.courses = courses || [];
             this.state.instructors = instructors || [];
+            this.state.rooms = rooms || [];
 
             if (this.state.groups.length) {
                 scheduleGroup.innerHTML = this.state.groups.map((group) => `<option value="${group.id}">${group.name}</option>`).join('');
-                const firstGroup = this.state.groups[0];
-                scheduleGroup.value = String(firstGroup.id);
+                scheduleGroup.value = String(this.state.groups[0].id);
                 scheduleSummary.innerHTML = `
-                    <strong>${firstGroup.name}</strong>
-                    <span>${firstGroup.size} students</span>
-                    <span>${(firstGroup.courses || []).length} course(s)</span>
+                    <strong>${this.state.groups[0].name}</strong>
+                    <span>${this.state.groups[0].size} students</span>
+                    <span>${(this.state.groups[0].courses || []).length} course(s)</span>
                 `;
             } else {
                 scheduleGroup.innerHTML = '<option value="">No batches available</option>';
@@ -211,22 +351,27 @@ const ScheduleView = {
             const updateSummary = () => {
                 const group = this.state.groups.find((item) => String(item.id) === scheduleGroup.value);
                 if (!group) {
-                    renderEmptyState('Select a batch to build the timetable.');
+                    renderEmptyState('Select a batch to preview the timetable.');
                     return;
                 }
-                scheduleSummary.innerHTML = `
-                    <strong>${group.name}</strong>
-                    <span>${group.size} students</span>
-                    <span>${(group.courses || []).length} course(s)</span>
-                `;
+
+                const existing = this.state.currentSchedules[group.id];
+                if (existing) {
+                    renderGroupGrid(group.id);
+                } else {
+                    scheduleSummary.innerHTML = `
+                        <strong>${group.name}</strong>
+                        <span>${group.size} students</span>
+                        <span>${(group.courses || []).length} course(s)</span>
+                    `;
+                }
             };
 
             scheduleGroup.addEventListener('change', updateSummary);
 
             document.getElementById('build-schedule-btn').addEventListener('click', () => {
-                const group = this.state.groups.find((item) => String(item.id) === scheduleGroup.value);
-                if (!group) {
-                    window.showToast('Please select a batch first.', 'error');
+                if (!this.state.groups.length) {
+                    window.showToast('Add at least one batch first.', 'error');
                     return;
                 }
 
@@ -235,21 +380,44 @@ const ScheduleView = {
                 const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 40;
 
                 try {
-                    renderGrid(group, startTime, endTime, slotMinutes);
-                    window.showToast('Timetable built successfully.', 'success');
+                    const allocation = allocateSchedule(startTime, endTime, slotMinutes);
+                    this.state.currentSchedules = {};
+                    allocation.groupGrids.forEach((grid, groupId) => {
+                        this.state.currentSchedules[groupId] = {
+                            slots: allocation.slots,
+                            groupGrids: allocation.groupGrids,
+                            groupAssignments: allocation.groupAssignments,
+                            assignedCount: allocation.assignedCount,
+                            skippedCount: allocation.skippedCount,
+                            totalSessions: allocation.totalSessions
+                        };
+                    });
+
+                    const selectedGroupId = parseInt(scheduleGroup.value, 10) || this.state.groups[0].id;
+                    renderGroupGrid(selectedGroupId);
+
+                    if (allocation.skippedCount > 0) {
+                        window.showToast(`Built timetable with ${allocation.skippedCount} unplaced session(s). Add more time slots, rooms, or teachers.`, 'error');
+                    } else {
+                        window.showToast('Timetable built successfully.', 'success');
+                    }
                 } catch (error) {
+                    console.error(error);
                     window.showToast(error.message, 'error');
                 }
             });
 
             document.getElementById('print-schedule-btn').addEventListener('click', () => {
-                if (!this.state.currentGrid) {
+                const groupId = this.state.currentGroupId || (scheduleGroup.value ? parseInt(scheduleGroup.value, 10) : null);
+                const group = this.state.groups.find((item) => item.id === groupId);
+                const scheduleData = groupId ? this.state.currentSchedules[groupId] : null;
+
+                if (!group || !scheduleData) {
                     window.showToast('Build a timetable before printing.', 'error');
                     return;
                 }
 
-                const { group, rows, timetable } = this.state.currentGrid;
-                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                const daysForPrint = days;
                 let html = `<!doctype html><html><head><meta charset="utf-8"><title>${this.state.currentTitle}</title><style>
                     body{font-family:Arial,Helvetica,sans-serif;margin:24px;color:#111827}
                     h1{font-size:22px;margin:0 0 8px}
@@ -262,13 +430,13 @@ const ScheduleView = {
                     .meta{font-size:12px;color:#6b7280}
                 </style></head><body>`;
                 html += `<h1>${group.name} timetable</h1><p>${group.size} students</p>`;
-                html += '<table><thead><tr><th>Time</th>' + days.map((day) => `<th>${day}</th>`).join('') + '</tr></thead><tbody>';
-                rows.forEach((row, rowIndex) => {
-                    html += `<tr><th class="time">${row.startLabel} - ${row.endLabel}</th>`;
-                    days.forEach((day, dayIndex) => {
-                        const cell = timetable[rowIndex][dayIndex];
+                html += '<table><thead><tr><th>Time</th>' + daysForPrint.map((day) => `<th>${day}</th>`).join('') + '</tr></thead><tbody>';
+                scheduleData.slots.forEach((slot, rowIndex) => {
+                    html += `<tr><th class="time">${slot.startLabel} - ${slot.endLabel}</th>`;
+                    daysForPrint.forEach((dayName, dayIndex) => {
+                        const cell = scheduleData.groupGrids.get(group.id)[rowIndex][dayIndex];
                         if (cell) {
-                            html += `<td><div class="course">${cell.courseName}</div><div class="meta">${cell.instructorName || 'TBA'}</div></td>`;
+                            html += `<td><div class="course">${cell.courseName}</div><div class="meta">${cell.instructorName}</div><div class="meta">${cell.roomName}</div></td>`;
                         } else {
                             html += '<td></td>';
                         }
