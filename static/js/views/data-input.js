@@ -22,12 +22,14 @@ const DataInputView = {
                     <h3>Teachers</h3>
                     <form id="form-instructor" class="crud-form">
                         <input type="text" id="inst-name" placeholder="Teacher Name" required>
-                        <select id="inst-groups" multiple style="height: 60px; margin-top:8px;">
-                            <option value="" disabled>Loading batches...</option>
-                        </select>
-                        <select id="inst-courses" multiple style="height: 60px; margin-top:8px;">
-                            <option value="" disabled>Loading courses...</option>
-                        </select>
+                        <div id="inst-groups-container" style="margin-top:8px; display:flex; flex-direction:column; gap:6px; max-height:120px; overflow:auto; padding:6px; border:1px solid var(--border-color); border-radius:8px; background: rgba(0,0,0,0.04);">
+                            <small style="color:var(--text-secondary);">Assign batches</small>
+                            <div id="inst-groups" class="checkbox-list">Loading batches...</div>
+                        </div>
+                        <div id="inst-courses-container" style="margin-top:8px; display:flex; flex-direction:column; gap:6px; max-height:120px; overflow:auto; padding:6px; border:1px solid var(--border-color); border-radius:8px; background: rgba(0,0,0,0.04);">
+                            <small style="color:var(--text-secondary);">Assign courses</small>
+                            <div id="inst-courses" class="checkbox-list">Loading courses...</div>
+                        </div>
                         <small style="color: var(--text-secondary); display: block;">Hold Ctrl to select multiple batches/courses.</small>
                         <button type="submit" class="btn primary" style="width: 100%">+ Add Teacher</button>
                     </form>
@@ -91,12 +93,14 @@ const DataInputView = {
                 document.getElementById('courses-list').innerHTML = '<p class="empty-msg">No courses yet. Add one above.</p>';
             }
             
-            // Populate Instructor Course Select
-            const courseSelect = document.getElementById('inst-courses');
-            if (courses.length) {
-                courseSelect.innerHTML = courses.map(c => '<option value="' + c.id + '">' + c.name + '</option>').join('');
-            } else {
-                courseSelect.innerHTML = '<option value="" disabled>Add courses first</option>';
+            // Populate Instructor checkbox lists
+            const instCourseDiv = document.getElementById('inst-courses');
+            if (instCourseDiv) {
+                if (courses.length) {
+                    instCourseDiv.innerHTML = courses.map(c => '<label style="display:block; padding:6px 8px; border-radius:6px;"><input type="checkbox" name="inst_course" value="' + c.id + '" style="margin-right:8px;">' + c.name + '</label>').join('');
+                } else {
+                    instCourseDiv.innerHTML = '<div class="empty-msg">Add courses first</div>';
+                }
             }
 
             // Populate group-courses checkbox list for batch creation
@@ -109,19 +113,11 @@ const DataInputView = {
                 }
             }
 
-            // Style selects: add open class on focus for subtle animation
-            ['inst-courses','inst-groups'].forEach(id => {
-                const el = document.getElementById(id);
-                if(!el) return;
-                el.addEventListener('focus', ()=> el.classList.add('select-open'));
-                el.addEventListener('blur', ()=> el.classList.remove('select-open'));
-            });
-
-            const groupSelect = document.getElementById('inst-groups');
-            if (groups && groups.length) {
-                groupSelect.innerHTML = groups.map(g => '<option value="' + g.id + '">' + g.name + '</option>').join('');
-            } else {
-                groupSelect.innerHTML = '<option value="" disabled>Add batches first</option>';
+            const groupDiv = document.getElementById('inst-groups');
+            if (groupDiv && groups && groups.length) {
+                groupDiv.innerHTML = groups.map(g => '<label style="display:block; padding:6px 8px; border-radius:6px;"><input type="checkbox" name="inst_group" value="' + g.id + '" style="margin-right:8px;">' + g.name + '</label>').join('');
+            } else if (groupDiv) {
+                groupDiv.innerHTML = '<div class="empty-msg">Add batches first</div>';
             }
 
             // Enable/disable cards based on workflow: must have batch -> instructor -> course
@@ -222,14 +218,11 @@ const DataInputView = {
         
         document.getElementById('form-instructor').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const selectEl = document.getElementById('inst-courses');
-            const selectedCourseIds = Array.from(selectEl.selectedOptions).map(opt => parseInt(opt.value));
-            const selectGroups = document.getElementById('inst-groups');
-            const selectedGroupIds = Array.from(selectGroups.selectedOptions).map(opt => parseInt(opt.value));
+            const selectedCourseIds = Array.from(document.querySelectorAll('#inst-courses input[name="inst_course"]:checked')).map(i=>parseInt(i.value));
+            const selectedGroupIds = Array.from(document.querySelectorAll('#inst-groups input[name="inst_group"]:checked')).map(i=>parseInt(i.value));
             const payload = {
                 name: document.getElementById('inst-name').value,
-                course_ids: selectedCourseIds
-                ,
+                course_ids: selectedCourseIds,
                 group_ids: selectedGroupIds
             };
             try {
