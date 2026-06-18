@@ -53,9 +53,11 @@ class TimetableSolver:
                 
         for c in self.courses:
             for r in self.rooms:
-                if c.get("students", 0) > r.get("capacity", 0) or c.get("room_type", "") != r.get("room_type", ""):
+                c_room_type = c.get("room_type") or c.get("type")
+                if c.get("students", 0) > r.get("capacity", 0) or (c_room_type and c_room_type != r.get("room_type", "")):
                     for s in self.timeslots:
                         self.model.Add(self.variables[(c["id"], r["id"], s["id"])] == 0)
+
 
     def add_dsl_constraints(self):
         from .constraints import apply_constraints

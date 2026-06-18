@@ -15,9 +15,24 @@ transformer = DSLTransformer()
 
 @router.post("/generate", response_model=ScheduleResponse)
 def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db)):
-    courses = [{"id": c.id, "name": c.name, "sessions_per_week": c.sessions_per_week} for c in db.query(Course).all()]
+    # Calculate student enrollment count from the groups taking each course
+    courses = []
+    groups_db = db.query(StudentGroup).all()
+    for c in db.query(Course).all():
+        students_count = 0
+        for g in groups_db:
+            if any(gc.id == c.id for gc in g.courses):
+                students_count += (g.size or 0)
+        courses.append({
+            "id": c.id,
+            "name": c.name,
+            "sessions_per_week": c.sessions_per_week,
+            "students": students_count,
+            "room_type": None
+        })
     rooms = [{"id": r.id, "name": r.name, "capacity": r.capacity, "room_type": r.room_type} for r in db.query(Room).all()]
     instructors = [{"id": i.id, "name": i.name, "courses": [c.id for c in i.courses], "groups": [g.id for g in i.groups]} for i in db.query(Instructor).all()]
+
     
     # Auto-generate default timeslots if empty
     ts_db = db.query(TimeSlot).all()

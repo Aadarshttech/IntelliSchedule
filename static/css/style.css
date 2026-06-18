@@ -453,7 +453,7 @@ select option { padding: 6px 8px; }
 
 .schedule-controls {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 14px;
     margin-bottom: 16px;
 }
@@ -501,6 +501,12 @@ select option { padding: 6px 8px; }
     background: #ffffff;
 }
 
+.schedule-hint {
+    margin: -6px 0 14px;
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+}
+
 .schedule-output {
     overflow-x: auto;
 }
@@ -514,9 +520,10 @@ select option { padding: 6px 8px; }
 }
 
 .timetable-grid {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto;
 }
 
 .timetable-grid th,
@@ -537,21 +544,19 @@ select option { padding: 6px 8px; }
     width: 110px;
 }
 
-.timetable-time {
-    width: 110px;
+.timetable-day {
+    width: 120px;
     background: #f8fafc;
     color: var(--text-primary);
     font-weight: 700;
     text-align: left;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
-.timetable-time span {
-    display: block;
-    margin-top: 4px;
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    font-weight: 500;
+.timetable-time-head {
+    min-width: 170px;
+    white-space: nowrap;
+    text-align: center;
 }
 
 .timetable-cell {
@@ -561,15 +566,50 @@ select option { padding: 6px 8px; }
 
 .timetable-cell--filled {
     background: linear-gradient(180deg, rgba(37,99,235,0.08), rgba(37,99,235,0.03));
+    cursor: grab;
+}
+
+.timetable-cell--filled:active {
+    cursor: grabbing;
 }
 
 .timetable-cell--empty {
     background: #ffffff;
 }
 
+.timetable-cell--break {
+    background: linear-gradient(180deg, rgba(249, 115, 22, 0.16), rgba(249, 115, 22, 0.06));
+}
+
+.timetable-time-head--break {
+    background: linear-gradient(180deg, rgba(249, 115, 22, 0.25), rgba(249, 115, 22, 0.12));
+    cursor: grab;
+}
+
+.timetable-time-head--break:active {
+    cursor: grabbing;
+}
+
+.timetable-cell--empty.drop-target,
+.timetable-cell--filled.drop-target {
+    outline: 2px dashed var(--accent-primary);
+    outline-offset: -4px;
+}
+
+.timetable-time-head.break-drop-target {
+    outline: 2px dashed #ea580c;
+    outline-offset: -4px;
+}
+
 .timetable-course {
     font-weight: 700;
     color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.timetable-break {
+    font-weight: 700;
+    color: #9a3412;
     margin-bottom: 4px;
 }
 
@@ -702,6 +742,40 @@ select option { padding: 6px 8px; }
 }
 .checkbox-list label:hover { background: rgba(255,255,255,0.02); }
 .checkbox-list input[type="checkbox"] { width: 16px; height: 16px; }
+
+.chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.chip__remove {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.chip__remove:hover {
+    color: var(--accent-danger);
+}
 
 .empty-msg {
     color: var(--text-muted);

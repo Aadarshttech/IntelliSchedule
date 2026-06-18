@@ -81,7 +81,7 @@ class ScheduleEntryResponse(BaseModel):
     id: int
     schedule_id: int
     course: CourseResponse
-    instructor: InstructorResponse
+    instructor: Optional[InstructorResponse] = None
     room: RoomResponse
     timeslot: TimeSlotResponse
     group: Optional[StudentGroupResponse] = None

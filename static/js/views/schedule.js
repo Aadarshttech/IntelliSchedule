@@ -6,7 +6,8 @@ const ScheduleView = {
         rooms: [],
         currentSchedules: {},
         currentGroupId: null,
-        currentTitle: ''
+        currentTitle: '',
+        seed: 0
     },
 
     render() {
@@ -15,10 +16,14 @@ const ScheduleView = {
                 <div class="schedule-builder__header">
                     <div>
                         <h3 style="margin-bottom:6px;">Schedule Output</h3>
-                        <p class="schedule-builder__subtitle">Pick a batch, set the time range, choose class length, and build a fixed timetable. The generator schedules all batches together so teachers and rooms do not collide.</p>
+                        <p class="schedule-builder__subtitle">Pick a batch, set the time range, choose class length and break time, then build a fixed timetable. The generator schedules all batches together so teachers and rooms do not collide.</p>
                     </div>
                     <div class="schedule-builder__actions">
                         <button class="btn primary" id="build-schedule-btn">Build Timetable</button>
+                        <button class="btn" id="shuffle-schedule-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                            Shuffle Timetable
+                        </button>
                         <button class="btn" id="print-schedule-btn">Print View</button>
                     </div>
                 </div>
@@ -42,10 +47,22 @@ const ScheduleView = {
                         <label for="schedule-length">Class Length (min)</label>
                         <input type="number" id="schedule-length" min="15" step="5" value="40">
                     </div>
+                    <div class="schedule-control">
+                        <label for="schedule-break-start">Break Start</label>
+                        <input type="time" id="schedule-break-start" value="12:00">
+                    </div>
+                    <div class="schedule-control">
+                        <label for="schedule-break-duration">Break Length (min)</label>
+                        <input type="number" id="schedule-break-duration" min="0" step="5" value="30">
+                    </div>
                 </div>
 
                 <div class="schedule-summary" id="schedule-summary">
                     Select a batch to preview its timetable.
+                </div>
+
+                <div class="schedule-hint">
+                    Drag class cells to move/swap sessions. Drag break cells to move them independently.
                 </div>
 
                 <div id="schedule-output" class="schedule-output">
@@ -74,6 +91,12 @@ const ScheduleView = {
             return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
         };
 
+        const inputTimeFromMinutes = (totalMinutes) => {
+            const hours24 = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return `${String(hours24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        };
+
         const hashText = (text) => {
             let hash = 0;
             for (let index = 0; index < text.length; index += 1) {
@@ -97,9 +120,21 @@ const ScheduleView = {
             return result;
         };
 
-        const buildSlots = (startTime, endTime, slotMinutes) => {
+        const buildSlots = (startTime, endTime, slotMinutes, breakStartTime, breakDurationMinutes) => {
             const startMinutes = minutesFromTime(startTime);
             const endMinutes = minutesFromTime(endTime);
+            const breakDuration = Math.max(Number(breakDurationMinutes || 0), 0);
+
+            let breakStartMinutes = null;
+            let breakEndMinutes = null;
+            if (breakDuration > 0) {
+                breakStartMinutes = minutesFromTime(breakStartTime || '12:00');
+                breakEndMinutes = Math.min(breakStartMinutes + breakDuration, endMinutes);
+
+                if (breakStartMinutes < startMinutes || breakStartMinutes >= endMinutes) {
+                    throw new Error('Break start must be inside the timetable range.');
+                }
+            }
 
             if (endMinutes <= startMinutes) {
                 throw new Error('End time must be after start time.');
@@ -107,11 +142,15 @@ const ScheduleView = {
 
             const rows = [];
             for (let cursor = startMinutes; cursor + slotMinutes <= endMinutes; cursor += slotMinutes) {
+                const slotEnd = cursor + slotMinutes;
+                const isBreak = breakDuration > 0 && cursor < breakEndMinutes && slotEnd > breakStartMinutes;
                 rows.push({
                     startMinutes: cursor,
-                    endMinutes: cursor + slotMinutes,
+                    endMinutes: slotEnd,
                     startLabel: timeFromMinutes(cursor),
-                    endLabel: timeFromMinutes(cursor + slotMinutes)
+                    endLabel: timeFromMinutes(slotEnd),
+                    isBreak,
+                    breakLabel: isBreak ? `${timeFromMinutes(breakStartMinutes)} - ${timeFromMinutes(breakEndMinutes)}` : ''
                 });
             }
 
@@ -175,21 +214,41 @@ const ScheduleView = {
             const ordered = [];
             Array.from(buckets.keys()).sort((a, b) => Number(a) - Number(b)).forEach((bucketKey) => {
                 const bucket = buckets.get(bucketKey);
-                ordered.push(...seededShuffle(bucket, bucketKey));
+                const seedText = bucketKey + (this.state.seed ? String(this.state.seed) : '');
+                ordered.push(...seededShuffle(bucket, seedText));
             });
 
             return ordered;
         };
 
-        const allocateSchedule = (startTime, endTime, slotMinutes) => {
-            const slots = buildSlots(startTime, endTime, slotMinutes);
-            const slotCount = slots.length * days.length;
+        const allocateSchedule = (startTime, endTime, slotMinutes, breakStartTime, breakDurationMinutes) => {
+            const slots = buildSlots(startTime, endTime, slotMinutes, breakStartTime, breakDurationMinutes);
             const sessionList = buildSessionList();
 
+            const candidateSlots = [];
+            slots.forEach((slot, rowIndex) => {
+                if (slot.isBreak) {
+                    return;
+                }
+                days.forEach((_, dayIndex) => {
+                    candidateSlots.push({ rowIndex, dayIndex });
+                });
+            });
+
+            const slotCount = candidateSlots.length;
+            if (!slotCount) {
+                throw new Error('No teaching slots available. Reduce break length or increase timetable range.');
+            }
+
             const groupGrids = new Map();
+            const breakGrids = new Map();
             const groupAssignments = new Map();
             this.state.groups.forEach((group) => {
                 groupGrids.set(group.id, Array.from({ length: slots.length }, () => Array(days.length).fill(null)));
+                const breakGrid = Array.from({ length: slots.length }, (_, rowIndex) =>
+                    Array.from({ length: days.length }, () => Boolean(slots[rowIndex].isBreak))
+                );
+                breakGrids.set(group.id, breakGrid);
                 groupAssignments.set(group.id, []);
             });
 
@@ -201,13 +260,14 @@ const ScheduleView = {
             let skippedCount = 0;
 
             sessionList.forEach((session, sessionIndex) => {
-                const startOffset = (hashText(session.sessionKey) + sessionIndex) % slotCount;
+                const startOffset = (hashText(session.sessionKey) + sessionIndex + (this.state.seed || 0)) % slotCount;
                 let placed = false;
 
                 for (let attempt = 0; attempt < slotCount; attempt += 1) {
                     const slotIndex = (startOffset + attempt) % slotCount;
-                    const rowIndex = Math.floor(slotIndex / days.length);
-                    const dayIndex = slotIndex % days.length;
+                    const candidate = candidateSlots[slotIndex];
+                    const rowIndex = candidate.rowIndex;
+                    const dayIndex = candidate.dayIndex;
                     const slot = slots[rowIndex];
                     const slotKey = `${days[dayIndex]}|${slot.startLabel}`;
                     const groupKey = `${session.groupId}|${slotKey}`;
@@ -222,6 +282,13 @@ const ScheduleView = {
                     }
 
                     const instructor = session.instructorCandidates.find((candidate) => !occupiedInstructors.has(`${candidate.id}|${slotKey}`));
+
+                    // Treat instructor as a hard constraint: if the course has
+                    // assigned teachers but none are free at this slot, skip it
+                    // to avoid cross-batch teacher collisions.
+                    if (session.instructorCandidates.length > 0 && !instructor) {
+                        continue;
+                    }
 
                     occupiedGroups.add(groupKey);
                     occupiedRooms.add(`${room.id}|${slotKey}`);
@@ -255,6 +322,7 @@ const ScheduleView = {
             return {
                 slots,
                 groupGrids,
+                breakGrids,
                 groupAssignments,
                 assignedCount,
                 skippedCount,
@@ -271,15 +339,25 @@ const ScheduleView = {
                 return;
             }
 
-            const rowsHtml = scheduleData.slots.map((slot, rowIndex) => {
-                const cells = days.map((dayName, dayIndex) => {
+            const breakGrid = scheduleData.breakGrids.get(groupId);
+            const rowsHtml = days.map((dayName, dayIndex) => {
+                const cells = scheduleData.slots.map((slot, rowIndex) => {
+                    if (breakGrid[rowIndex][dayIndex]) {
+                        return `
+                            <td class="timetable-cell timetable-cell--break" data-cell-type="break" data-slot-index="${rowIndex}" data-day-index="${dayIndex}" draggable="true">
+                                <div class="timetable-break">Break</div>
+                                <div class="timetable-meta">${slot.startLabel} - ${slot.endLabel}</div>
+                            </td>
+                        `;
+                    }
+
                     const cell = scheduleData.groupGrids.get(groupId)[rowIndex][dayIndex];
                     if (!cell) {
-                        return '<td class="timetable-cell timetable-cell--empty"></td>';
+                        return `<td class="timetable-cell timetable-cell--empty" data-cell-type="empty" data-slot-index="${rowIndex}" data-day-index="${dayIndex}"></td>`;
                     }
 
                     return `
-                        <td class="timetable-cell timetable-cell--filled">
+                        <td class="timetable-cell timetable-cell--filled" data-cell-type="class" data-slot-index="${rowIndex}" data-day-index="${dayIndex}" draggable="true">
                             <div class="timetable-course">${cell.courseName}</div>
                             <div class="timetable-meta">${cell.instructorName}</div>
                             <div class="timetable-meta">${cell.roomName}</div>
@@ -287,7 +365,7 @@ const ScheduleView = {
                     `;
                 }).join('');
 
-                return `<tr><th class="timetable-time">${slot.startLabel}<span>${slot.endLabel}</span></th>${cells}</tr>`;
+                return `<tr><th class="timetable-day">${dayName}</th>${cells}</tr>`;
             }).join('');
 
             scheduleOutput.innerHTML = `
@@ -295,14 +373,16 @@ const ScheduleView = {
                     <table class="timetable-grid">
                         <thead>
                             <tr>
-                                <th class="timetable-corner">Time</th>
-                                ${days.map((day) => `<th>${day}</th>`).join('')}
+                                <th class="timetable-corner">Day</th>
+                                ${scheduleData.slots.map((slot, slotIndex) => `<th class="timetable-time-head" data-slot-index="${slotIndex}">${slot.startLabel} - ${slot.endLabel}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>${rowsHtml}</tbody>
                     </table>
                 </div>
             `;
+
+            bindGridEditing(groupId);
 
             this.state.currentGroupId = groupId;
             this.state.currentTitle = `${group.name} timetable`;
@@ -322,6 +402,226 @@ const ScheduleView = {
             this.state.currentSchedules = {};
             this.state.currentGroupId = null;
             this.state.currentTitle = '';
+        };
+
+        const moveClassSession = (groupId, fromSlotIndex, fromDayIndex, toSlotIndex, toDayIndex) => {
+            const scheduleData = this.state.currentSchedules[groupId];
+            if (!scheduleData) {
+                return { ok: false };
+            }
+
+            const breakGrid = scheduleData.breakGrids.get(groupId);
+            if (breakGrid[toSlotIndex][toDayIndex]) {
+                return { ok: false, error: 'Cannot move a class into a break slot.' };
+            }
+
+            const grid = scheduleData.groupGrids.get(groupId);
+            const source = grid[fromSlotIndex][fromDayIndex];
+            if (!source) {
+                return { ok: false };
+            }
+
+            // Check cross-batch teacher collision at target slot
+            const sourceInstructor = source.instructorName;
+            const sourceRoom = source.roomName;
+            if (sourceInstructor && sourceInstructor !== 'TBA') {
+                for (const [otherGroupId, otherData] of Object.entries(this.state.currentSchedules)) {
+                    const otherGid = parseInt(otherGroupId, 10);
+                    if (otherGid === groupId) continue;
+                    const otherGrid = otherData.groupGrids.get(otherGid);
+                    if (!otherGrid) continue;
+                    const otherCell = otherGrid[toSlotIndex] && otherGrid[toSlotIndex][toDayIndex];
+                    if (otherCell && otherCell.instructorName === sourceInstructor) {
+                        const otherGroup = this.state.groups.find((g) => g.id === otherGid);
+                        const otherGroupName = otherGroup ? otherGroup.name : `Batch #${otherGid}`;
+                        return {
+                            ok: false,
+                            error: `Teacher "${sourceInstructor}" is already teaching "${otherCell.courseName}" for ${otherGroupName} at this time.`
+                        };
+                    }
+                }
+            }
+
+            // Check cross-batch room collision at target slot
+            if (sourceRoom) {
+                for (const [otherGroupId, otherData] of Object.entries(this.state.currentSchedules)) {
+                    const otherGid = parseInt(otherGroupId, 10);
+                    if (otherGid === groupId) continue;
+                    const otherGrid = otherData.groupGrids.get(otherGid);
+                    if (!otherGrid) continue;
+                    const otherCell = otherGrid[toSlotIndex] && otherGrid[toSlotIndex][toDayIndex];
+                    if (otherCell && otherCell.roomName === sourceRoom) {
+                        const otherGroup = this.state.groups.find((g) => g.id === otherGid);
+                        const otherGroupName = otherGroup ? otherGroup.name : `Batch #${otherGid}`;
+                        return {
+                            ok: false,
+                            error: `Room "${sourceRoom}" is already used by "${otherCell.courseName}" for ${otherGroupName} at this time.`
+                        };
+                    }
+                }
+            }
+
+            // If swapping with an existing class at target, also validate the swapped class at the source slot
+            const target = grid[toSlotIndex][toDayIndex] || null;
+            if (target) {
+                const targetInstructor = target.instructorName;
+                const targetRoom = target.roomName;
+                if (targetInstructor && targetInstructor !== 'TBA') {
+                    for (const [otherGroupId, otherData] of Object.entries(this.state.currentSchedules)) {
+                        const otherGid = parseInt(otherGroupId, 10);
+                        if (otherGid === groupId) continue;
+                        const otherGrid = otherData.groupGrids.get(otherGid);
+                        if (!otherGrid) continue;
+                        const otherCell = otherGrid[fromSlotIndex] && otherGrid[fromSlotIndex][fromDayIndex];
+                        if (otherCell && otherCell.instructorName === targetInstructor) {
+                            const otherGroup = this.state.groups.find((g) => g.id === otherGid);
+                            const otherGroupName = otherGroup ? otherGroup.name : `Batch #${otherGid}`;
+                            return {
+                                ok: false,
+                                error: `Swap blocked: Teacher "${targetInstructor}" is already teaching "${otherCell.courseName}" for ${otherGroupName} at the source slot.`
+                            };
+                        }
+                    }
+                }
+                if (targetRoom) {
+                    for (const [otherGroupId, otherData] of Object.entries(this.state.currentSchedules)) {
+                        const otherGid = parseInt(otherGroupId, 10);
+                        if (otherGid === groupId) continue;
+                        const otherGrid = otherData.groupGrids.get(otherGid);
+                        if (!otherGrid) continue;
+                        const otherCell = otherGrid[fromSlotIndex] && otherGrid[fromSlotIndex][fromDayIndex];
+                        if (otherCell && otherCell.roomName === targetRoom) {
+                            const otherGroup = this.state.groups.find((g) => g.id === otherGid);
+                            const otherGroupName = otherGroup ? otherGroup.name : `Batch #${otherGid}`;
+                            return {
+                                ok: false,
+                                error: `Swap blocked: Room "${targetRoom}" is already used by "${otherCell.courseName}" for ${otherGroupName} at the source slot.`
+                            };
+                        }
+                    }
+                }
+            }
+
+            grid[toSlotIndex][toDayIndex] = source;
+            grid[fromSlotIndex][fromDayIndex] = target;
+            return { ok: true };
+        };
+
+        const moveBreakCell = (groupId, sourceSlotIndex, sourceDayIndex, targetSlotIndex, targetDayIndex) => {
+            const scheduleData = this.state.currentSchedules[groupId];
+            if (!scheduleData) {
+                return false;
+            }
+
+            const breakGrid = scheduleData.breakGrids.get(groupId);
+            if (!breakGrid || !breakGrid[sourceSlotIndex][sourceDayIndex]) {
+                return false;
+            }
+
+            if (targetSlotIndex === sourceSlotIndex && targetDayIndex === sourceDayIndex) {
+                return false;
+            }
+
+            const grid = scheduleData.groupGrids.get(groupId);
+            const sourceClass = grid[sourceSlotIndex][sourceDayIndex];
+            const targetClass = grid[targetSlotIndex][targetDayIndex];
+            const targetIsBreak = breakGrid[targetSlotIndex][targetDayIndex];
+
+            grid[targetSlotIndex][targetDayIndex] = sourceClass;
+            grid[sourceSlotIndex][sourceDayIndex] = targetClass;
+
+            breakGrid[targetSlotIndex][targetDayIndex] = true;
+            breakGrid[sourceSlotIndex][sourceDayIndex] = targetIsBreak;
+
+            return true;
+        };
+
+        const bindGridEditing = (groupId) => {
+            const table = scheduleOutput.querySelector('.timetable-grid');
+            if (!table) {
+                return;
+            }
+
+            let dragPayload = null;
+
+            table.querySelectorAll('[draggable="true"]').forEach((element) => {
+                element.addEventListener('dragstart', (event) => {
+                    const cellType = element.dataset.cellType || '';
+                    const slotIndex = Number(element.dataset.slotIndex);
+                    const dayIndex = element.dataset.dayIndex !== undefined ? Number(element.dataset.dayIndex) : null;
+
+                    if (cellType === 'class') {
+                        dragPayload = { type: 'class', slotIndex, dayIndex };
+                    } else if (cellType === 'break') {
+                        dragPayload = { type: 'break', slotIndex, dayIndex };
+                    } else {
+                        dragPayload = null;
+                    }
+
+                    if (event.dataTransfer) {
+                        event.dataTransfer.effectAllowed = 'move';
+                    }
+                });
+
+                element.addEventListener('dragend', () => {
+                    dragPayload = null;
+                });
+            });
+
+            table.querySelectorAll('.timetable-cell, .timetable-time-head').forEach((target) => {
+                target.addEventListener('dragover', (event) => {
+                    if (!dragPayload) {
+                        return;
+                    }
+
+                    const isTimeHead = target.classList.contains('timetable-time-head');
+                    const targetCellType = target.dataset.cellType || '';
+
+                    if (dragPayload.type === 'class' && !isTimeHead && targetCellType !== 'break') {
+                        event.preventDefault();
+                    }
+
+                    if (dragPayload.type === 'break' && !isTimeHead && target.dataset.slotIndex !== undefined) {
+                        event.preventDefault();
+                        target.classList.add('break-drop-target');
+                    }
+                });
+
+                target.addEventListener('dragleave', () => {
+                    target.classList.remove('break-drop-target');
+                });
+
+                target.addEventListener('drop', (event) => {
+                    if (!dragPayload) {
+                        return;
+                    }
+
+                    const isTimeHead = target.classList.contains('timetable-time-head');
+                    const targetSlotIndex = Number(target.dataset.slotIndex);
+                    const targetDayIndex = target.dataset.dayIndex !== undefined ? Number(target.dataset.dayIndex) : null;
+
+                    if (dragPayload.type === 'class' && !isTimeHead) {
+                        event.preventDefault();
+                        const result = moveClassSession(groupId, dragPayload.slotIndex, dragPayload.dayIndex, targetSlotIndex, targetDayIndex);
+                        if (result.ok) {
+                            renderGroupGrid(groupId);
+                            window.showToast('Class updated.', 'success');
+                        } else if (result.error) {
+                            window.showToast(result.error, 'error');
+                        }
+                    }
+
+                    if (dragPayload.type === 'break' && !isTimeHead && target.dataset.slotIndex !== undefined) {
+                        event.preventDefault();
+                        target.classList.remove('break-drop-target');
+                        const moved = moveBreakCell(groupId, dragPayload.slotIndex, dragPayload.dayIndex, targetSlotIndex, targetDayIndex);
+                        if (moved) {
+                            renderGroupGrid(groupId);
+                            window.showToast('Break time updated.', 'success');
+                        }
+                    }
+                });
+            });
         };
 
         try {
@@ -377,17 +677,22 @@ const ScheduleView = {
                     return;
                 }
 
+                this.state.seed = 0; // Reset seed for default/deterministic generation
+
                 const startTime = document.getElementById('schedule-start').value || '09:00';
                 const endTime = document.getElementById('schedule-end').value || '15:30';
                 const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 40;
+                const breakStartTime = document.getElementById('schedule-break-start').value || '12:00';
+                const breakDurationMinutes = Math.max(parseInt(document.getElementById('schedule-break-duration').value, 10) || 0, 0);
 
                 try {
-                    const allocation = allocateSchedule(startTime, endTime, slotMinutes);
+                    const allocation = allocateSchedule(startTime, endTime, slotMinutes, breakStartTime, breakDurationMinutes);
                     this.state.currentSchedules = {};
                     allocation.groupGrids.forEach((grid, groupId) => {
                         this.state.currentSchedules[groupId] = {
                             slots: allocation.slots,
                             groupGrids: allocation.groupGrids,
+                            breakGrids: allocation.breakGrids,
                             groupAssignments: allocation.groupAssignments,
                             assignedCount: allocation.assignedCount,
                             skippedCount: allocation.skippedCount,
@@ -402,6 +707,50 @@ const ScheduleView = {
                         window.showToast(`Built timetable with ${allocation.skippedCount} unplaced session(s). Add more time slots, rooms, or teachers.`, 'error');
                     } else {
                         window.showToast('Timetable built successfully.', 'success');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    window.showToast(error.message, 'error');
+                }
+            });
+
+            document.getElementById('shuffle-schedule-btn').addEventListener('click', () => {
+                if (!this.state.groups.length) {
+                    window.showToast('Add at least one batch first.', 'error');
+                    return;
+                }
+
+                // Randomize seed
+                this.state.seed = Math.floor(Math.random() * 1000000) + 1;
+
+                const startTime = document.getElementById('schedule-start').value || '09:00';
+                const endTime = document.getElementById('schedule-end').value || '15:30';
+                const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 40;
+                const breakStartTime = document.getElementById('schedule-break-start').value || '12:00';
+                const breakDurationMinutes = Math.max(parseInt(document.getElementById('schedule-break-duration').value, 10) || 0, 0);
+
+                try {
+                    const allocation = allocateSchedule(startTime, endTime, slotMinutes, breakStartTime, breakDurationMinutes);
+                    this.state.currentSchedules = {};
+                    allocation.groupGrids.forEach((grid, groupId) => {
+                        this.state.currentSchedules[groupId] = {
+                            slots: allocation.slots,
+                            groupGrids: allocation.groupGrids,
+                            breakGrids: allocation.breakGrids,
+                            groupAssignments: allocation.groupAssignments,
+                            assignedCount: allocation.assignedCount,
+                            skippedCount: allocation.skippedCount,
+                            totalSessions: allocation.totalSessions
+                        };
+                    });
+
+                    const selectedGroupId = parseInt(scheduleGroup.value, 10) || this.state.groups[0].id;
+                    renderGroupGrid(selectedGroupId);
+
+                    if (allocation.skippedCount > 0) {
+                        window.showToast(`Shuffled timetable with ${allocation.skippedCount} unplaced session(s).`, 'error');
+                    } else {
+                        window.showToast('Timetable shuffled successfully.', 'success');
                     }
                 } catch (error) {
                     console.error(error);
@@ -427,15 +776,22 @@ const ScheduleView = {
                     table{width:100%;border-collapse:collapse}
                     th,td{border:1px solid #d1d5db;padding:10px;vertical-align:top;text-align:center}
                     thead th{background:#eef2ff}
-                    .time{font-weight:700;text-align:left;white-space:nowrap}
+                    .day{font-weight:700;text-align:left;white-space:nowrap;background:#f8fafc}
+                    .time{font-weight:700;white-space:nowrap}
                     .course{font-weight:700;margin-bottom:4px}
                     .meta{font-size:12px;color:#6b7280}
                 </style></head><body>`;
                 html += `<h1>${group.name} timetable</h1><p>${group.size} students</p>`;
-                html += '<table><thead><tr><th>Time</th>' + daysForPrint.map((day) => `<th>${day}</th>`).join('') + '</tr></thead><tbody>';
-                scheduleData.slots.forEach((slot, rowIndex) => {
-                    html += `<tr><th class="time">${slot.startLabel} - ${slot.endLabel}</th>`;
-                    daysForPrint.forEach((dayName, dayIndex) => {
+                html += '<table><thead><tr><th>Day</th>' + scheduleData.slots.map((slot) => `<th class="time">${slot.startLabel} - ${slot.endLabel}</th>`).join('') + '</tr></thead><tbody>';
+                daysForPrint.forEach((dayName, dayIndex) => {
+                    const breakGrid = scheduleData.breakGrids.get(group.id);
+                    html += `<tr><th class="day">${dayName}</th>`;
+                    scheduleData.slots.forEach((slot, rowIndex) => {
+                        if (breakGrid[rowIndex][dayIndex]) {
+                            html += `<td><div class="course">Break</div><div class="meta">${slot.startLabel} - ${slot.endLabel}</div></td>`;
+                            return;
+                        }
+
                         const cell = scheduleData.groupGrids.get(group.id)[rowIndex][dayIndex];
                         if (cell) {
                             html += `<td><div class="course">${cell.courseName}</div><div class="meta">${cell.instructorName}</div><div class="meta">${cell.roomName}</div></td>`;
