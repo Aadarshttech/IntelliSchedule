@@ -85,3 +85,4 @@ IntelliSchedule allows administrators to define hard and soft constraints using 
 <div align="center">
   <sub>Built with ❤️ by Aadarsh</sub>
 </div>
+
