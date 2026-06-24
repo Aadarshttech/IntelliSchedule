@@ -904,7 +904,7 @@ const ScheduleView = {
                             const displayTitle = parsed.code + (parsed.short ? `(${parsed.short})` : '');
                             html += `<td><div class="course">${displayTitle}</div></td>`;
                         } else {
-                            html += '<td></td>';
+                            html += '<td style="background-color:#f8fafc"></td>';
                         }
                     });
                     html += '</tr>';

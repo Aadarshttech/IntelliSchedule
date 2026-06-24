@@ -788,3 +788,7 @@ select option { padding: 6px 8px; }
 /* Disabled card state for workflow enforcement */
 .disabled-card { opacity: 0.6; pointer-events: none; filter: grayscale(6%); }
 
+/* Empty Timetable Cell Styling */
+.timetable-cell--empty {
+    background-color: var(--bg-panel-hover);
+}
