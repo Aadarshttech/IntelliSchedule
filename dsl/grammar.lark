@@ -39,6 +39,7 @@ preference_type: "morning" CNAME "weight" NUMBER                  -> p_morning
                | "avoid_day" CNAME DAY "weight" NUMBER            -> p_avoid_day
                | "consecutive" CNAME "weight" NUMBER              -> p_consecutive
                | "compact" CNAME "weight" NUMBER                  -> p_compact
+               | "instructor_afternoon" CNAME DAY "weight" NUMBER -> p_instructor_afternoon
 
 DAY: "Monday"i | "Tuesday"i | "Wednesday"i | "Thursday"i | "Friday"i | "Saturday"i | "Sunday"i
 TIME: /\d{1,2}:\d{2}/

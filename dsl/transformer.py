@@ -103,3 +103,4 @@ class DSLTransformer(Transformer):
     def p_avoid_day(self, c, d, w): return {"name": "avoid_day", "course": str(c), "day": str(d), "weight": int(w)}
     def p_consecutive(self, c, w): return {"name": "consecutive", "course": str(c), "weight": int(w)}
     def p_compact(self, g, w): return {"name": "compact", "group": str(g), "weight": int(w)}
+    def p_instructor_afternoon(self, inst, day, w): return {"name": "instructor_afternoon", "instructor": str(inst), "day": str(day), "weight": int(w)}

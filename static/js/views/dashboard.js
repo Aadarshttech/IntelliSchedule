@@ -44,6 +44,7 @@ const DashboardView = {
                             <option value="constraint same_day Math101 Physics101">Same Day (Math101 & Physics101)</option>
                             <option value="prefer morning Math101 weight 10">Prefer Morning (Math101, weight 10)</option>
                             <option value="prefer avoid_day Physics101 Friday weight 5">Avoid Friday (Physics101, weight 5)</option>
+                            <option value="prefer instructor_afternoon Sunil_Regmi Monday weight 10">Instructor Afternoon (Sunil_Regmi on Monday, weight 10)</option>
                         </select>
                     </div>
                     
@@ -116,9 +117,10 @@ const DashboardView = {
                 
                 try {
                     const dslTextValue = editor.getValue();
+                    localStorage.setItem('current_dsl_rules', dslTextValue);
                     await api.post('/schedule/generate', { dsl_text: dslTextValue });
                     window.showToast("Schedule generated successfully!", "success");
-                    window.navigateTo('schedule');
+                    window.navigateTo('/schedule');
                 } catch (e) {
                     window.showToast("Error generating schedule: " + e.message, "error");
                     btn.innerHTML = originalText;

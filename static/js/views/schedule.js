@@ -424,6 +424,22 @@ const ScheduleView = {
             // Check cross-batch teacher collision at target slot
             const sourceInstructor = source.instructorName;
             const sourceRoom = source.roomName;
+            
+            // Hardcoded client-side rule for Sunil sir's preference (only if explicitly enabled in terminal)
+            const currentDsl = localStorage.getItem('current_dsl_rules') || '';
+            const isSunilRuleActive = currentDsl.includes('instructor_afternoon Sunil_Regmi Monday');
+            
+            if (isSunilRuleActive && sourceInstructor && sourceInstructor.toLowerCase().includes('sunil')) {
+                const targetDay = days[toDayIndex];
+                const targetSlot = scheduleData.slots[toSlotIndex];
+                if (targetDay === 'Monday' && targetSlot.startMinutes < 720) {
+                    return {
+                        ok: false,
+                        error: 'Warning: Based on your constraints, Sunil Regmi prefers afternoon classes on Monday!'
+                    };
+                }
+            }
+
             if (sourceInstructor && sourceInstructor !== 'TBA') {
                 for (const [otherGroupId, otherData] of Object.entries(this.state.currentSchedules)) {
                     const otherGid = parseInt(otherGroupId, 10);

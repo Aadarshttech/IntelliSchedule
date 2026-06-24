@@ -75,6 +75,8 @@ def generate_schedule(req: ScheduleGenerateRequest, db: Session = Depends(get_db
                 mapped_p = p.copy()
                 if "course" in mapped_p and mapped_p["course"] in course_map:
                     mapped_p["course"] = course_map[mapped_p["course"]]
+                if "instructor" in mapped_p and mapped_p["instructor"] in instructor_map:
+                    mapped_p["instructor"] = instructor_map[mapped_p["instructor"]]
                 preferences.append(mapped_p)
         except Exception as e:
             print(f"DSL Warning: {str(e)} - Ignoring DSL constraints")
