@@ -129,11 +129,17 @@ const ScheduleView = {
             let breakEndMinutes = null;
             if (breakDuration > 0) {
                 breakStartMinutes = minutesFromTime(breakStartTime || '12:00');
-                breakEndMinutes = Math.min(breakStartMinutes + breakDuration, endMinutes);
-
+                
                 if (breakStartMinutes < startMinutes || breakStartMinutes >= endMinutes) {
-                    throw new Error('Break start must be inside the timetable range.');
+                    let alternateMinutes = (breakStartMinutes + 12 * 60) % (24 * 60);
+                    if (alternateMinutes >= startMinutes && alternateMinutes < endMinutes) {
+                        breakStartMinutes = alternateMinutes;
+                    } else {
+                        throw new Error('Break start must be inside the timetable range. Please check your AM/PM settings.');
+                    }
                 }
+                
+                breakEndMinutes = Math.min(breakStartMinutes + breakDuration, endMinutes);
             }
 
             if (endMinutes <= startMinutes) {
