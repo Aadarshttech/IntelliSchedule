@@ -58,6 +58,14 @@ class TimetableSolver:
                     for s in self.timeslots:
                         self.model.Add(self.variables[(c["id"], r["id"], s["id"])] == 0)
 
+        # Max 1 session per course per day (no same classes twice a day)
+        days = set(s.get("day") for s in self.timeslots)
+        for c in self.courses:
+            for d in days:
+                day_timeslots = [s for s in self.timeslots if s.get("day") == d]
+                self.model.Add(
+                    sum(self.variables[(c["id"], r["id"], s["id"])] for r in self.rooms for s in day_timeslots) <= 1
+                )
 
     def add_dsl_constraints(self):
         from .constraints import apply_constraints

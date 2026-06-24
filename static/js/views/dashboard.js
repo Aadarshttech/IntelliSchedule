@@ -94,6 +94,7 @@ const DashboardView = {
             editor.setValue(`// CORE CONSTRAINTS (Automatically Enforced):
 // - No overlapping classes in the same room.
 // - No teacher can be double-booked across batches.
+// - No class is taught more than once per day to the same batch.
 
 // CUSTOM CONSTRAINTS:
 // You can define rules for ANY teacher or class. Examples:
