@@ -339,6 +339,18 @@ const ScheduleView = {
                 return;
             }
 
+            const parseCourseName = (fullNameRaw) => {
+                const match = fullNameRaw.match(/(.+?)(?:\s*\((.*?)\))?\s*\[(.*?)\]/);
+                if (match) {
+                    return {
+                        title: match[1].trim(),
+                        short: match[2] ? match[2].trim() : '',
+                        code: match[3].trim()
+                    };
+                }
+                return { title: fullNameRaw, short: '', code: fullNameRaw };
+            };
+
             const breakGrid = scheduleData.breakGrids.get(groupId);
             const rowsHtml = days.map((dayName, dayIndex) => {
                 const cells = scheduleData.slots.map((slot, rowIndex) => {
@@ -356,17 +368,56 @@ const ScheduleView = {
                         return `<td class="timetable-cell timetable-cell--empty" data-cell-type="empty" data-slot-index="${rowIndex}" data-day-index="${dayIndex}"></td>`;
                     }
 
+                    const parsed = parseCourseName(cell.courseName);
+                    const displayTitle = parsed.code + (parsed.short ? `(${parsed.short})` : '');
+
                     return `
-                        <td class="timetable-cell timetable-cell--filled" data-cell-type="class" data-slot-index="${rowIndex}" data-day-index="${dayIndex}" draggable="true">
-                            <div class="timetable-course">${cell.courseName}</div>
-                            <div class="timetable-meta">${cell.instructorName}</div>
-                            <div class="timetable-meta">${cell.roomName}</div>
+                        <td class="timetable-cell timetable-cell--filled" data-cell-type="class" data-slot-index="${rowIndex}" data-day-index="${dayIndex}" draggable="true" style="font-weight: 600; text-align: center;">
+                            <div class="timetable-course" style="color: var(--accent-primary); font-size: 1.05rem;">${displayTitle}</div>
                         </td>
                     `;
                 }).join('');
 
                 return `<tr><th class="timetable-day">${dayName}</th>${cells}</tr>`;
             }).join('');
+
+            const assignments = scheduleData.groupAssignments.get(groupId) || [];
+            const uniqueCourses = new Map();
+            assignments.forEach(a => {
+                if (!uniqueCourses.has(a.courseId)) {
+                    uniqueCourses.set(a.courseId, a);
+                }
+            });
+            
+            const facultyRowsHtml = Array.from(uniqueCourses.values()).map(a => {
+                const parsed = parseCourseName(a.courseName);
+                const fullCourseTitle = parsed.title + (parsed.short ? ` (${parsed.short})` : '');
+                return `
+                    <tr>
+                        <td style="padding: 12px 16px; border: 1px solid var(--border-color); text-align: center;">${parsed.code}</td>
+                        <td style="padding: 12px 16px; border: 1px solid var(--border-color); text-align: center;">${fullCourseTitle}</td>
+                        <td style="padding: 12px 16px; border: 1px solid var(--border-color); text-align: center;">${a.instructorName}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const facultyTableHtml = uniqueCourses.size > 0 ? `
+                <div style="margin-top: 32px;">
+                    <h4 style="margin-bottom: 16px; font-size: 1.2rem; color: var(--text-primary);">Faculty Assignments:</h4>
+                    <table style="width: 100%; border-collapse: collapse; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <thead>
+                            <tr style="background: rgba(255,255,255,0.05);">
+                                <th style="padding: 12px 16px; border: 1px solid var(--border-color); font-weight: 600; text-align: center;">Course Code</th>
+                                <th style="padding: 12px 16px; border: 1px solid var(--border-color); font-weight: 600; text-align: center;">Course Name</th>
+                                <th style="padding: 12px 16px; border: 1px solid var(--border-color); font-weight: 600; text-align: center;">Instructor Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${facultyRowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            ` : '';
 
             scheduleOutput.innerHTML = `
                 <div class="timetable-frame">
@@ -380,6 +431,7 @@ const ScheduleView = {
                         <tbody>${rowsHtml}</tbody>
                     </table>
                 </div>
+                ${facultyTableHtml}
             `;
 
             bindGridEditing(groupId);
