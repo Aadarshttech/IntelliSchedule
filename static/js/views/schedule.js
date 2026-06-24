@@ -518,6 +518,28 @@ const ScheduleView = {
                 return { ok: false };
             }
 
+            // Check if the same class already exists on the target day for this batch
+            if (fromDayIndex !== toDayIndex) {
+                for (let sIdx = 0; sIdx < scheduleData.slots.length; sIdx++) {
+                    if (sIdx === toSlotIndex) continue;
+                    const existingCell = grid[sIdx][toDayIndex];
+                    if (existingCell && existingCell.courseName === source.courseName) {
+                        return { ok: false, error: `Batch already has ${source.courseName} on this day.` };
+                    }
+                }
+                
+                const target = grid[toSlotIndex][toDayIndex] || null;
+                if (target) {
+                    for (let sIdx = 0; sIdx < scheduleData.slots.length; sIdx++) {
+                        if (sIdx === fromSlotIndex) continue;
+                        const existingCell = grid[sIdx][fromDayIndex];
+                        if (existingCell && existingCell.courseName === target.courseName) {
+                            return { ok: false, error: `Swap blocked: Batch already has ${target.courseName} on that day.` };
+                        }
+                    }
+                }
+            }
+
             // Check cross-batch teacher collision at target slot
             const sourceInstructor = source.instructorName;
             const sourceRoom = source.roomName;
