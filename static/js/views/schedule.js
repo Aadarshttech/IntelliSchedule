@@ -207,12 +207,26 @@ const ScheduleView = {
         const buildSessionList = () => {
             const sessions = [];
 
+            const instructorTotalSessions = new Map();
+            this.state.groups.forEach(g => {
+                (g.courses || []).forEach(c => {
+                    const count = Math.max(parseInt(c.sessions_per_week || 1, 10), 1);
+                    const instructors = instructorOptionsForSession(c.id, g.id);
+                    instructors.forEach(inst => {
+                        instructorTotalSessions.set(inst.id, (instructorTotalSessions.get(inst.id) || 0) + count);
+                    });
+                });
+            });
+
             this.state.groups.forEach((group) => {
                 const roomCount = roomOptionsForGroup(group).length || 0;
                 (group.courses || []).forEach((course) => {
                     const sessionCount = Math.max(parseInt(course.sessions_per_week || 1, 10), 1);
-                    const instructorCount = instructorOptionsForSession(course.id, group.id).length || 0;
-                    const pressure = (roomCount || 99) + (instructorCount || 99) + sessionCount;
+                    const instructors = instructorOptionsForSession(course.id, group.id);
+                    const instructorCount = instructors.length || 0;
+                    
+                    const maxCommitment = instructors.length ? Math.max(...instructors.map(i => instructorTotalSessions.get(i.id) || 0)) : 0;
+                    const pressure = (roomCount * 10) + (instructorCount * 10) - maxCommitment;
 
                     for (let index = 0; index < sessionCount; index += 1) {
                         sessions.push({
@@ -222,7 +236,7 @@ const ScheduleView = {
                             groupSize: group.size,
                             courseId: course.id,
                             courseName: course.name,
-                            instructorCandidates: instructorOptionsForSession(course.id, group.id),
+                            instructorCandidates: instructors,
                             roomCandidates: roomOptionsForGroup(group),
                             priority: pressure
                         });
