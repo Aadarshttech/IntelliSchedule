@@ -39,12 +39,13 @@ const DashboardView = {
                         </div>
                         <select id="dsl-template-select" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; font-family: inherit; font-size: 0.9rem; outline: none;">
                             <option value="">-- Select a Template --</option>
-                            <option value="constraint no_overlap Math101 Physics101">No Overlap (Math101 & Physics101)</option>
-                            <option value="constraint require_room Math101 Room101">Require Room (Math101 in Room101)</option>
-                            <option value="constraint same_day Math101 Physics101">Same Day (Math101 & Physics101)</option>
-                            <option value="prefer morning Math101 weight 10">Prefer Morning (Math101, weight 10)</option>
-                            <option value="prefer avoid_day Physics101 Friday weight 5">Avoid Friday (Physics101, weight 5)</option>
-                            <option value="prefer instructor_afternoon Sunil_Regmi Monday weight 10">Instructor Afternoon (Sunil_Regmi on Monday, weight 10)</option>
+                            <option value="constraint no_overlap AICS_203 AIMA_202">No Overlap (AICS_203 & AIMA_202)</option>
+                            <option value="constraint require_room AICS_203 AI_103">Require Room (AICS_203 in AI_103)</option>
+                            <option value="constraint same_day AICS_203 AIMA_202">Same Day (AICS_203 & AIMA_202)</option>
+                            <option value="prefer morning AICS_203 weight 10">Prefer Morning (AICS_203, weight 10)</option>
+                            <option value="prefer avoid_day AIMA_202 Friday weight 5">Avoid Friday (AIMA_202, weight 5)</option>
+                            <option value="prefer instructor_morning Sunil_Regmi Monday weight 10">Instructor Morning (Sunil_Regmi on Monday, weight 10)</option>
+                            <option value="prefer instructor_afternoon Amrit_Dahal Tuesday weight 10">Instructor Afternoon (Amrit_Dahal on Tuesday, weight 10)</option>
                         </select>
                     </div>
                     
@@ -89,8 +90,16 @@ const DashboardView = {
                 theme: "material-ocean"
             });
             editor.setSize("100%", "220px");
-            // Provide some default text or leave blank
-            editor.setValue("// Write your constraints here...\n// e.g., constraint no_overlap Math101 Physics101\n");
+            // Provide default text
+            editor.setValue(`// CORE CONSTRAINTS (Automatically Enforced):
+// - No overlapping classes in the same room.
+// - No teacher can be double-booked across batches.
+
+// CUSTOM CONSTRAINTS:
+// You can define rules for ANY teacher or class. Examples:
+// prefer instructor_morning Sunil_Regmi Monday weight 10
+// prefer instructor_afternoon Amrit_Dahal Tuesday weight 10
+`);
             setTimeout(() => {
                 editor.refresh();
             }, 100);

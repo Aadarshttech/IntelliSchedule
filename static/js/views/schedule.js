@@ -522,17 +522,24 @@ const ScheduleView = {
             const sourceInstructor = source.instructorName;
             const sourceRoom = source.roomName;
             
-            // Hardcoded client-side rule for Sunil sir's preference (only if explicitly enabled in terminal)
             const currentDsl = localStorage.getItem('current_dsl_rules') || '';
-            const isSunilRuleActive = currentDsl.includes('instructor_afternoon Sunil_Regmi Monday');
+            const targetDay = days[toDayIndex];
+            const targetSlot = scheduleData.slots[toSlotIndex];
             
-            if (isSunilRuleActive && sourceInstructor && sourceInstructor.toLowerCase().includes('sunil')) {
-                const targetDay = days[toDayIndex];
-                const targetSlot = scheduleData.slots[toSlotIndex];
-                if (targetDay === 'Monday' && targetSlot.startMinutes < 720) {
+            if (sourceInstructor) {
+                const instructorNameSafe = sourceInstructor.replace(/\s+/g, '_');
+                const afternoonRegex = new RegExp(`prefer\\s+instructor_afternoon\\s+${instructorNameSafe}\\s+${targetDay}`, 'gi');
+                if (afternoonRegex.test(currentDsl) && targetSlot.startMinutes < 720) {
                     return {
                         ok: false,
-                        error: 'Warning: Based on your constraints, Sunil Regmi prefers afternoon classes on Monday!'
+                        error: `Warning: Based on your constraints, ${sourceInstructor} prefers afternoon classes on ${targetDay}!`
+                    };
+                }
+                const morningRegex = new RegExp(`prefer\\s+instructor_morning\\s+${instructorNameSafe}\\s+${targetDay}`, 'gi');
+                if (morningRegex.test(currentDsl) && targetSlot.startMinutes >= 720) {
+                    return {
+                        ok: false,
+                        error: `Warning: Based on your constraints, ${sourceInstructor} prefers morning classes on ${targetDay}!`
                     };
                 }
             }
