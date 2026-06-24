@@ -141,17 +141,33 @@ const ScheduleView = {
             }
 
             const rows = [];
-            for (let cursor = startMinutes; cursor + slotMinutes <= endMinutes; cursor += slotMinutes) {
-                const slotEnd = cursor + slotMinutes;
-                const isBreak = breakDuration > 0 && cursor < breakEndMinutes && slotEnd > breakStartMinutes;
-                rows.push({
-                    startMinutes: cursor,
-                    endMinutes: slotEnd,
-                    startLabel: timeFromMinutes(cursor),
-                    endLabel: timeFromMinutes(slotEnd),
-                    isBreak,
-                    breakLabel: isBreak ? `${timeFromMinutes(breakStartMinutes)} - ${timeFromMinutes(breakEndMinutes)}` : ''
-                });
+            let cursor = startMinutes;
+            while (cursor < endMinutes) {
+                if (breakDuration > 0 && cursor < breakEndMinutes && (cursor + slotMinutes) > breakStartMinutes) {
+                    rows.push({
+                        startMinutes: breakStartMinutes,
+                        endMinutes: breakEndMinutes,
+                        startLabel: timeFromMinutes(breakStartMinutes),
+                        endLabel: timeFromMinutes(breakEndMinutes),
+                        isBreak: true,
+                        breakLabel: ''
+                    });
+                    cursor = breakEndMinutes;
+                } else {
+                    if (cursor + slotMinutes <= endMinutes) {
+                        rows.push({
+                            startMinutes: cursor,
+                            endMinutes: cursor + slotMinutes,
+                            startLabel: timeFromMinutes(cursor),
+                            endLabel: timeFromMinutes(cursor + slotMinutes),
+                            isBreak: false,
+                            breakLabel: ''
+                        });
+                        cursor += slotMinutes;
+                    } else {
+                        break;
+                    }
+                }
             }
 
             if (!rows.length) {
@@ -368,7 +384,6 @@ const ScheduleView = {
                         return `
                             <td class="timetable-cell timetable-cell--break" data-cell-type="break" data-slot-index="${rowIndex}" data-day-index="${dayIndex}" draggable="true">
                                 <div class="timetable-break">Break</div>
-                                <div class="timetable-meta">${slot.startLabel} - ${slot.endLabel}</div>
                             </td>
                         `;
                     }
@@ -879,7 +894,7 @@ const ScheduleView = {
                     html += `<tr><th class="day">${dayName}</th>`;
                     scheduleData.slots.forEach((slot, rowIndex) => {
                         if (breakGrid[rowIndex][dayIndex]) {
-                            html += `<td><div class="course" style="color:#6b7280">Break</div><div class="meta">${slot.startLabel} - ${slot.endLabel}</div></td>`;
+                            html += `<td><div class="course" style="color:#6b7280">Break</div></td>`;
                             return;
                         }
 
