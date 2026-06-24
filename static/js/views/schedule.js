@@ -301,6 +301,9 @@ const ScheduleView = {
             const occupiedRooms = new Set();
             const occupiedInstructors = new Set();
             const occupiedGroups = new Set();
+            const occupiedDayCourses = new Set();
+            
+            const currentDsl = localStorage.getItem('current_dsl_rules') || '';
 
             let assignedCount = 0;
             let skippedCount = 0;
@@ -335,9 +338,37 @@ const ScheduleView = {
                     if (session.instructorCandidates.length > 0 && !instructor) {
                         continue;
                     }
+                    
+                    const dayCourseKey = `${session.groupId}|${days[dayIndex]}|${session.courseId}`;
+                    if (occupiedDayCourses.has(dayCourseKey)) {
+                        continue; // No same class twice a day
+                    }
+
+                    // Respect DSL rules
+                    const courseNameSafe = session.courseName.split(' ')[0].replace(/\s+/g, '_'); // e.g., AICC_203
+                    const avoidDayRegex = new RegExp(`avoid_day\\s+(.*?)\\s+${days[dayIndex]}`, 'i');
+                    const matchAvoid = currentDsl.match(avoidDayRegex);
+                    if (matchAvoid && session.courseName.includes(matchAvoid[1])) {
+                        continue; // Avoid this day
+                    }
+
+                    if (instructor) {
+                        const instructorNameSafe = instructor.name.replace(/\s+/g, '_');
+                        const groupNameSafe = session.groupName.replace(/\s+/g, '_');
+                        const noDayRegex = new RegExp(`instructor_group_no_day\\s+${instructorNameSafe}\\s+${groupNameSafe}\\s+${days[dayIndex]}`, 'gi');
+                        if (noDayRegex.test(currentDsl)) {
+                            continue; // Instructor refuses this group on this day
+                        }
+                        
+                        const afterRegex = new RegExp(`instructor_afternoon\\s+${instructorNameSafe}\\s+${days[dayIndex]}`, 'gi');
+                        if (afterRegex.test(currentDsl) && (rowIndex < slots.length / 2)) {
+                            continue; // Force afternoon
+                        }
+                    }
 
                     occupiedGroups.add(groupKey);
                     occupiedRooms.add(`${room.id}|${slotKey}`);
+                    occupiedDayCourses.add(`${session.groupId}|${days[dayIndex]}|${session.courseId}`);
                     if (instructor) {
                         occupiedInstructors.add(`${instructor.id}|${slotKey}`);
                     }
