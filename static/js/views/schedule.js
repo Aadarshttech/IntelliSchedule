@@ -162,6 +162,16 @@ const ScheduleView = {
         };
 
         const roomOptionsForGroup = (group) => {
+            let targetRoomName = '';
+            if (group.name.includes('1st Semester')) targetRoomName = 'AI 103';
+            else if (group.name.includes('3rd Semester')) targetRoomName = '103';
+            else if (group.name.includes('4th Semester')) targetRoomName = 'G001';
+
+            if (targetRoomName) {
+                const exactRoom = this.state.rooms.find(r => r.name === targetRoomName);
+                if (exactRoom) return [exactRoom];
+            }
+
             const suitableRooms = this.state.rooms.filter((room) => Number(room.capacity || 0) >= Number(group.size || 0));
             return suitableRooms.length ? suitableRooms : this.state.rooms;
         };
@@ -836,17 +846,30 @@ const ScheduleView = {
                     return;
                 }
 
+                const parseCourseName = (fullNameRaw) => {
+                    const match = fullNameRaw.match(/(.+?)(?:\s*\((.*?)\))?\s*\[(.*?)\]/);
+                    if (match) {
+                        return {
+                            title: match[1].trim(),
+                            short: match[2] ? match[2].trim() : '',
+                            code: match[3].trim()
+                        };
+                    }
+                    return { title: fullNameRaw, short: '', code: fullNameRaw };
+                };
+
                 const daysForPrint = days;
                 let html = `<!doctype html><html><head><meta charset="utf-8"><title>${this.state.currentTitle}</title><style>
                     body{font-family:Arial,Helvetica,sans-serif;margin:24px;color:#111827}
                     h1{font-size:22px;margin:0 0 8px}
+                    h2{font-size:18px;margin:24px 0 12px}
                     p{margin:0 0 16px;color:#4b5563}
-                    table{width:100%;border-collapse:collapse}
+                    table{width:100%;border-collapse:collapse;margin-bottom:24px}
                     th,td{border:1px solid #d1d5db;padding:10px;vertical-align:top;text-align:center}
                     thead th{background:#eef2ff}
                     .day{font-weight:700;text-align:left;white-space:nowrap;background:#f8fafc}
                     .time{font-weight:700;white-space:nowrap}
-                    .course{font-weight:700;margin-bottom:4px}
+                    .course{font-weight:700;margin-bottom:4px;font-size:15px}
                     .meta{font-size:12px;color:#6b7280}
                 </style></head><body>`;
                 html += `<h1>${group.name} timetable</h1><p>${group.size} students</p>`;
@@ -856,20 +879,42 @@ const ScheduleView = {
                     html += `<tr><th class="day">${dayName}</th>`;
                     scheduleData.slots.forEach((slot, rowIndex) => {
                         if (breakGrid[rowIndex][dayIndex]) {
-                            html += `<td><div class="course">Break</div><div class="meta">${slot.startLabel} - ${slot.endLabel}</div></td>`;
+                            html += `<td><div class="course" style="color:#6b7280">Break</div><div class="meta">${slot.startLabel} - ${slot.endLabel}</div></td>`;
                             return;
                         }
 
                         const cell = scheduleData.groupGrids.get(group.id)[rowIndex][dayIndex];
                         if (cell) {
-                            html += `<td><div class="course">${cell.courseName}</div><div class="meta">${cell.instructorName}</div><div class="meta">${cell.roomName}</div></td>`;
+                            const parsed = parseCourseName(cell.courseName);
+                            const displayTitle = parsed.code + (parsed.short ? `(${parsed.short})` : '');
+                            html += `<td><div class="course">${displayTitle}</div></td>`;
                         } else {
                             html += '<td></td>';
                         }
                     });
                     html += '</tr>';
                 });
-                html += '</tbody></table></body></html>';
+                html += '</tbody></table>';
+
+                const assignments = scheduleData.groupAssignments.get(group.id) || [];
+                const uniqueCourses = new Map();
+                assignments.forEach(a => {
+                    if (!uniqueCourses.has(a.courseId)) {
+                        uniqueCourses.set(a.courseId, a);
+                    }
+                });
+                
+                if (uniqueCourses.size > 0) {
+                    html += `<h2>Faculty Assignments:</h2><table><thead><tr><th>Course Code</th><th>Course Name</th><th>Instructor Name</th></tr></thead><tbody>`;
+                    Array.from(uniqueCourses.values()).forEach(a => {
+                        const parsed = parseCourseName(a.courseName);
+                        const fullCourseTitle = parsed.title + (parsed.short ? ` (${parsed.short})` : '');
+                        html += `<tr><td>${parsed.code}</td><td style="text-align:left">${fullCourseTitle}</td><td>${a.instructorName}</td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                }
+
+                html += '</body></html>';
 
                 const win = window.open('', '_blank');
                 win.document.write(html);
