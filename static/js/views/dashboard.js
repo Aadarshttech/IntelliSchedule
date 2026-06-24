@@ -44,8 +44,7 @@ const DashboardView = {
                             <option value="constraint same_day AICS_203 AIMA_202">Same Day (AICS_203 & AIMA_202)</option>
                             <option value="prefer morning AICS_203 weight 10">Prefer Morning (AICS_203, weight 10)</option>
                             <option value="prefer avoid_day AIMA_202 Friday weight 5">Avoid Friday (AIMA_202, weight 5)</option>
-                            <option value="prefer instructor_morning Sunil_Regmi Monday weight 10">Instructor Morning (Sunil_Regmi on Monday, weight 10)</option>
-                            <option value="prefer instructor_afternoon Amrit_Dahal Tuesday weight 10">Instructor Afternoon (Amrit_Dahal on Tuesday, weight 10)</option>
+                            <option value="constraint instructor_group_no_day Sunil_Regmi COMP_SEM4 Friday">No Friday Class (Sunil_Regmi for COMP_SEM4)</option>
                         </select>
                     </div>
                     

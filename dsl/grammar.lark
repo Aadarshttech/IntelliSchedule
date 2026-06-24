@@ -31,6 +31,7 @@ constraint_type: "no_overlap" CNAME CNAME                         -> c_no_overla
                | "require_room" CNAME CNAME                       -> c_require_room
                | "same_day" CNAME CNAME                           -> c_same_day
                | "max_daily" CNAME NUMBER                         -> c_max_daily
+               | "instructor_group_no_day" CNAME CNAME DAY        -> c_instructor_group_no_day
 
 // Soft Preferences
 preference: "prefer" preference_type -> preference

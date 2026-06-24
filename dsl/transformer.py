@@ -94,6 +94,7 @@ class DSLTransformer(Transformer):
     def c_require_room(self, c, r): return {"name": "require_room", "course": str(c), "room": str(r)}
     def c_same_day(self, c1, c2): return {"name": "same_day", "courses": [str(c1), str(c2)]}
     def c_max_daily(self, inst, limit): return {"name": "max_daily", "instructor": str(inst), "limit": int(limit)}
+    def c_instructor_group_no_day(self, inst, grp, day): return {"name": "instructor_group_no_day", "instructor": str(inst), "group": str(grp), "day": str(day)}
 
     def preference(self, item):
         item["type"] = "preference"
@@ -103,4 +104,5 @@ class DSLTransformer(Transformer):
     def p_avoid_day(self, c, d, w): return {"name": "avoid_day", "course": str(c), "day": str(d), "weight": int(w)}
     def p_consecutive(self, c, w): return {"name": "consecutive", "course": str(c), "weight": int(w)}
     def p_compact(self, g, w): return {"name": "compact", "group": str(g), "weight": int(w)}
+    def p_instructor_morning(self, inst, day, w): return {"name": "instructor_morning", "instructor": str(inst), "day": str(day), "weight": int(w)}
     def p_instructor_afternoon(self, inst, day, w): return {"name": "instructor_afternoon", "instructor": str(inst), "day": str(day), "weight": int(w)}

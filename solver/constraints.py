@@ -70,3 +70,33 @@ def apply_constraints(engine):
                         for s_id in ts_d 
                         if (c_id, r["id"], s_id) in var) <= limit
                 )
+        elif ctype == "instructor_group_no_day":
+            inst_id = constr.get("instructor")
+            grp_id = constr.get("group")
+            day = constr.get("day")
+            if not inst_id or not grp_id or not day: continue
+            
+            # Find courses taught by instructor
+            instructor_courses = []
+            for inst in engine.data.get("instructors", []):
+                if inst["id"] == inst_id:
+                    instructor_courses = inst.get("courses", [])
+                    break
+                    
+            # Find courses taken by group
+            group_courses = []
+            for grp in engine.data.get("groups", []):
+                if grp["id"] == grp_id:
+                    group_courses = grp.get("courses", [])
+                    break
+                    
+            common_courses = set(instructor_courses).intersection(set(group_courses))
+            if not common_courses: continue
+            
+            # Prevent scheduling these common courses on the specified day
+            ts_d = [s["id"] for s in engine.timeslots if s["day"].lower() == day.lower()]
+            for c_id in common_courses:
+                for r in engine.rooms:
+                    for s_id in ts_d:
+                        if (c_id, r["id"], s_id) in var:
+                            model.Add(var[(c_id, r["id"], s_id)] == 0)
