@@ -25,15 +25,47 @@ const DashboardView = {
                 </div>
             </div>
             
-            <div class="card" style="margin-top: 24px; text-align: center; padding: 48px 24px;">
-                <h3 style="font-size: 1.5rem; margin-bottom: 16px;">Ready to build your timetable?</h3>
-                <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;">
+            <div class="card" style="margin-top: 24px; padding: 32px 24px;">
+                <h3 style="font-size: 1.5rem; margin-bottom: 16px; text-align: center;">Ready to build your timetable?</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; text-align: center;">
                     Make sure you have added all your Courses, Rooms, and Teachers in the Data Input section. The AI will automatically avoid overlapping teachers and rooms.
                 </p>
-                <button id="btn-generate-schedule" class="btn primary" style="font-size: 1.1rem; padding: 12px 24px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    Generate Timetable
-                </button>
+                
+                <div style="margin-bottom: 24px; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-weight: 600; color: var(--text-primary);">Advanced Constraints Terminal</label>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Write custom rules or select a template to insert</p>
+                        </div>
+                        <select id="dsl-template-select" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; font-family: inherit; font-size: 0.9rem; outline: none;">
+                            <option value="">-- Select a Template --</option>
+                            <option value="constraint no_overlap Math101 Physics101">No Overlap (Math101 & Physics101)</option>
+                            <option value="constraint require_room Math101 Room101">Require Room (Math101 in Room101)</option>
+                            <option value="constraint same_day Math101 Physics101">Same Day (Math101 & Physics101)</option>
+                            <option value="prefer morning Math101 weight 10">Prefer Morning (Math101, weight 10)</option>
+                            <option value="prefer avoid_day Physics101 Friday weight 5">Avoid Friday (Physics101, weight 5)</option>
+                        </select>
+                    </div>
+                    
+                    <div style="border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1); background: #0f111a;">
+                        <div style="background: #1e1e1e; padding: 8px 16px; display: flex; align-items: center; border-bottom: 1px solid #333;">
+                            <div style="display: flex; gap: 6px;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
+                            </div>
+                            <div style="color: #888; font-family: monospace; font-size: 0.8rem; margin-left: 16px;">tt-ai -- dsl_terminal</div>
+                        </div>
+                        <textarea id="dsl-editor-textarea" name="dsl_editor" style="display: none;"></textarea>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button id="btn-generate-schedule" class="btn primary" style="font-size: 1.1rem; padding: 12px 24px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Generate Timetable
+                    </button>
+                </div>
             </div>
         `;
     },
@@ -48,6 +80,34 @@ const DashboardView = {
             document.getElementById('stat-rooms').innerText = rooms.length || 0;
             document.getElementById('stat-instructors').innerText = instructors.length || 0;
             
+            // Initialize CodeMirror for DSL Editor
+            const dslTextArea = document.getElementById('dsl-editor-textarea');
+            const editor = CodeMirror.fromTextArea(dslTextArea, {
+                lineNumbers: true,
+                mode: "javascript",
+                theme: "material-ocean"
+            });
+            editor.setSize("100%", "220px");
+            // Provide some default text or leave blank
+            editor.setValue("// Write your constraints here...\n// e.g., constraint no_overlap Math101 Physics101\n");
+            setTimeout(() => {
+                editor.refresh();
+            }, 100);
+            
+            // Handle Template Dropdown
+            const templateSelect = document.getElementById('dsl-template-select');
+            templateSelect.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val) {
+                    const currentVal = editor.getValue();
+                    const spacer = (currentVal.endsWith('\n') || currentVal === '') ? '' : '\n';
+                    editor.setValue(currentVal + spacer + val + '\n');
+                    editor.focus();
+                    editor.setCursor(editor.lineCount(), 0);
+                    e.target.value = ''; // reset dropdown
+                }
+            });
+            
             document.getElementById('btn-generate-schedule').addEventListener('click', async () => {
                 const btn = document.getElementById('btn-generate-schedule');
                 const originalText = btn.innerHTML;
@@ -55,7 +115,8 @@ const DashboardView = {
                 btn.disabled = true;
                 
                 try {
-                    await api.post('/schedule/generate', { dsl_text: "" });
+                    const dslTextValue = editor.getValue();
+                    await api.post('/schedule/generate', { dsl_text: dslTextValue });
                     window.showToast("Schedule generated successfully!", "success");
                     window.navigateTo('schedule');
                 } catch (e) {

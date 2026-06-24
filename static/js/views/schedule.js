@@ -45,7 +45,7 @@ const ScheduleView = {
                     </div>
                     <div class="schedule-control">
                         <label for="schedule-length">Class Length (min)</label>
-                        <input type="number" id="schedule-length" min="15" step="5" value="40">
+                        <input type="number" id="schedule-length" min="15" step="5" value="120">
                     </div>
                     <div class="schedule-control">
                         <label for="schedule-break-start">Break Start</label>
@@ -681,7 +681,7 @@ const ScheduleView = {
 
                 const startTime = document.getElementById('schedule-start').value || '09:00';
                 const endTime = document.getElementById('schedule-end').value || '15:30';
-                const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 40;
+                const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 120;
                 const breakStartTime = document.getElementById('schedule-break-start').value || '12:00';
                 const breakDurationMinutes = Math.max(parseInt(document.getElementById('schedule-break-duration').value, 10) || 0, 0);
 
@@ -725,7 +725,7 @@ const ScheduleView = {
 
                 const startTime = document.getElementById('schedule-start').value || '09:00';
                 const endTime = document.getElementById('schedule-end').value || '15:30';
-                const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 40;
+                const slotMinutes = parseInt(document.getElementById('schedule-length').value, 10) || 120;
                 const breakStartTime = document.getElementById('schedule-break-start').value || '12:00';
                 const breakDurationMinutes = Math.max(parseInt(document.getElementById('schedule-break-duration').value, 10) || 0, 0);
 
