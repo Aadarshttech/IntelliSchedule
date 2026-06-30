@@ -81,6 +81,8 @@ IntelliSchedule allows administrators to define hard and soft constraints using 
 
 *(Example rules can be defined via the built-in DSL Editor in the frontend).*
 
+For more comprehensive details on how to write rules, see the [DSL Documentation](DSL_DOCUMENTATION.md).
+
 ---
 <div align="center">
   <sub>Built with ❤️ by Aadarsh</sub>
